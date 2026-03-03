@@ -1,61 +1,137 @@
 #include <functional>
 #include <vector>
+#include <string>
 #include <iostream>
 
-struct Tensor {
-    double value;
-};
+/*
+===写在前面===
+现在的结构：
+    Graph = 结构
+    Node = 依赖 + 输出
+    Op = 计算规则
+    Executor = 执行策略
+*/ 
 
-// Node 描述怎么计算
-struct Node {
-    std::function<void(const std::vector<Tensor*>& inputs, Tensor& output)> op;
-    std::vector<Tensor*> inputs;
-    Tensor output;
-};
+class Tensor{
+public:
+    Tensor() :value_(0.0) {}
 
-struct Graph {
-    std::vector<Node*> nodes;
-};
-
-void execute(Graph& graph) {
-    // 这里假设 graph.nodes 是拓扑排序好的。
-    // TODO: excutor 增加拓扑排序功能。Executor 是否应该在 run 时排序？
-    for (auto node : graph.nodes) {
-        node->op(node->inputs, node->output);
+    explicit Tensor(double value){
+        value_ = value;
     }
-}
+    
+    ~Tensor(){}
 
-Node* make_add(Tensor* a, Tensor* b) {
-    Node* node = new Node;
-    node->inputs = {a, b};
-    node->op = [](const std::vector<Tensor*>& inputs, Tensor& output){
-        output.value = inputs[0]->value + inputs[1]->value;
-    };
-    return node;
-}
+    double value() {
+        return value_;
+    }
 
-Node* make_sub(Tensor*a, Tensor* b) {
-    Node* node = new Node;
-    node->inputs = {a, b};
-    node->op = [](const std::vector<Tensor*>& inputs, Tensor& output) {
-        output.value = inputs[0]->value - inputs[1]->value;
-    };
-    return node;
-}
+    void setValue(const double& value) {
+        value_ = value;
+    }
+
+private:
+    double value_;
+};
+
+class Op{
+public:
+    virtual ~Op(){}
+    virtual void compute(const std::vector<Tensor*>& input, Tensor& output) = 0;
+    virtual const std::string name() const = 0;
+};
+
+class AddOp : public Op {
+public:
+    AddOp() {}
+    ~AddOp() {}
+
+    void compute(const std::vector<Tensor*>& input, Tensor& output) override {
+        double result = input[0]->value() + input[1]->value();
+        output.setValue(result);
+    }
+
+    const std::string name() const override {
+        return "Add";
+    }
+};
+
+class Node{
+public:
+    Node(Op* op, const std::vector<Tensor*>& inputs)
+        :op_(op), inputs_(inputs) {}
+    
+    Node(const Node&) = delete;
+    Node& operator=(const Node&) = delete;
+
+    void compute(){
+        op_->compute(inputs_, output_);
+    }
+
+    Op* op() const {
+        return op_;
+    }
+
+    Tensor& output() {
+        return output_;
+    }
+
+    const Tensor& output() const {
+        return output_;
+    }
+
+private:
+    Op* op_;
+    std::vector<Tensor*> inputs_;
+    Tensor output_;
+};
+
+class Graph{
+public:
+    Graph() {
+        nodes_.resize(10);
+    }
+    ~Graph() {}
+
+    void addNode(std::unique_ptr<Node> node) {
+        nodes_.push_back(std::move(node));
+    }
+
+    const std::vector<std::unique_ptr<Node>>& nodes() const  {
+        return nodes_;
+    }
+
+private:
+    std::vector<std::unique_ptr<Node>> nodes_;
+};
+
+class Executor{
+public:
+    Executor() {}
+    ~Executor() {}
+
+    void run(Graph& graph) {
+        for (auto& node : graph.nodes()) {
+            // node->op(node->inputs, node->output);
+            node->compute();
+        }
+    }
+};
 
 int main() {
     Tensor a{3.0};
     Tensor b{4.0};
     Tensor c{5.0};
 
-    Graph g;
+    AddOp add_op;
+    Graph graph;
+    auto node = std::make_unique<Node>(&add_op, std::vector<Tensor*>{&a, &b});
+    Node* node_ptr = node.get();
+    
+    graph.addNode(std::move(node));
 
-    Node* node1 = make_add(&a, &b);
-    g.nodes.push_back(node1);
-    Node* node2 = make_add(&node1->output, &c);
-    g.nodes.push_back(node2);
-
-    execute(g);
-
-    std::cout << node2->output.value << std::endl;
+    Executor executor;
+    executor.run(graph);
+    
+    std::cout << node_ptr->output().value() << std::endl;
 }

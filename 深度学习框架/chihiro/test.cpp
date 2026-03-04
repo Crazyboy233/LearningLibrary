@@ -80,6 +80,9 @@ public:
         return output_;
     }
 
+    const std::vector<Tensor*> inputs() {
+        return inputs_;
+    }
 private:
     Op* op_;
     std::vector<Tensor*> inputs_;
@@ -88,9 +91,7 @@ private:
 
 class Graph{
 public:
-    Graph() {
-        nodes_.resize(10);
-    }
+    Graph() {}
     ~Graph() {}
 
     void addNode(std::unique_ptr<Node> node) {
@@ -112,7 +113,6 @@ public:
 
     void run(Graph& graph) {
         for (auto& node : graph.nodes()) {
-            // node->op(node->inputs, node->output);
             node->compute();
         }
     }
@@ -126,12 +126,16 @@ int main() {
     AddOp add_op;
     Graph graph;
     auto node = std::make_unique<Node>(&add_op, std::vector<Tensor*>{&a, &b});
+    auto node2 = std::make_unique<Node>(&add_op, std::vector<Tensor*>{&a, &b});
     Node* node_ptr = node.get();
-    
+    Node* node2_ptr = node2.get();
+
     graph.addNode(std::move(node));
+    graph.addNode(std::move(node2));
 
     Executor executor;
     executor.run(graph);
-    
+
     std::cout << node_ptr->output().value() << std::endl;
+    std::cout << node2_ptr->output().value() << std::endl;
 }

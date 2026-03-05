@@ -4,7 +4,7 @@ class Node;
 
 class Tensor{
 public:
-    Tensor() :value_(0.0) {}
+    Tensor() :value_(0.0), grad_(0.0) {}
 
     explicit Tensor(double value){
         value_ = value;
@@ -23,7 +23,7 @@ public:
     void zeroGrad() { grad_ = 0.0; }
 
 private:
-    double grad_;
     Node* producer_ = nullptr;
     double value_;
+    double grad_;
 };

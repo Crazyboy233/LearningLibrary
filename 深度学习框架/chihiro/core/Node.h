@@ -18,24 +18,16 @@ public:
 
     void compute(){
         op_->compute(inputs_, output_);
-        // output_.setProducer(this);
+        
     }
 
-    Op* op() const {
-        return op_;
-    }
+    Op* op() const { return op_; }
+    Tensor& output() { return output_; }
+    const Tensor& output() const { return output_; }
+    const std::vector<Tensor*> inputs() { return inputs_; }
 
-    Tensor& output() {
-        return output_;
-    }
-
-    const Tensor& output() const {
-        return output_;
-    }
-
-    const std::vector<Tensor*> inputs() {
-        return inputs_;
-    }
+    void forward();
+    void backward();
 private:
     Op* op_;
     std::vector<Tensor*> inputs_;

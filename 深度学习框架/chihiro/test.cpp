@@ -18,23 +18,33 @@
 // g++ test.cpp -I./core/
 
 int main() {
-    Tensor a{3.0};
-    Tensor b{4.0};
-    Tensor c{5.0};
+    Tensor a(2.0);
+    Tensor b(3.0);
+    Tensor c(4.0);
 
     AddOp add_op;
+    MulOp mul_op;
     Graph graph;
-    auto node = std::make_unique<Node>(&add_op, std::vector<Tensor*>{&a, &b});
-    auto node2 = std::make_unique<Node>(&add_op, std::vector<Tensor*>{&node.get()->output(), &c});
-    Node* node_ptr = node.get();
-    Node* node2_ptr = node2.get();
 
-    graph.addNode(std::move(node));
-    graph.addNode(std::move(node2));
+    auto add_node = std::make_unique<Node>(&add_op, std::vector<Tensor*>{&a, &b});
+    Node* add_ptr = add_node.get();
+    graph.addNode(std::move(add_node));
+
+    auto mul_node = std::make_unique<Node>(&mul_op, std::vector<Tensor*>{&add_ptr->output(), &c});
+    Node* mul_ptr = mul_node.get();
+    graph.addNode(std::move(mul_node));
 
     Executor executor;
-    executor.run(graph);
+    executor.forward(graph);
 
-    std::cout << node_ptr->output().value() << std::endl;
-    std::cout << node2_ptr->output().value() << std::endl;
+    Tensor& z = mul_ptr->output();
+    executor.backward(graph, z);
+    
+    std::cout << "z = " << z.value() << std::endl;
+    std::cout << "da = " << a.grad() << std::endl;
+    std::cout << "db = " << b.grad() << std::endl;
+    std::cout << "dc = " << c.grad() << std::endl;
+    
+    std::cout << add_ptr->output().value() << std::endl;
+    std::cout << mul_ptr->output().value() << std::endl;
 }

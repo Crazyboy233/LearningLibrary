@@ -13,4 +13,7 @@ public:
             node->compute();
         }
     }
+
+    void forward(Graph& graph);
+    void backward(Graph& graph, Tensor& loss);
 };

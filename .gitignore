@@ -1,3 +1,5 @@
 **/.DS_Store
 my_venv/
+tf-env/
+torch-env/
 a.out

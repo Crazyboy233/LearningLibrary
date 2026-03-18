@@ -1,4 +1,4 @@
-#include "core/executor.h"
+#include "../core/executor.h"
 
 #include <functional>
 #include <vector>
@@ -15,7 +15,7 @@
 */ 
 
 // 编译命令如下：
-// g++ test.cpp ./core/*.cc -I./core/
+// g++ test/test_forward_backward.cpp ./core/*.cc -I./core/
 
 int main() {
     Tensor a(2.0);

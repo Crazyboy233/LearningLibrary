@@ -16,4 +16,6 @@ public:
 
     void forward(Graph& graph);
     void backward(Graph& graph, Tensor& loss);
+
+    void zeroGrad(Graph& graph);
 };

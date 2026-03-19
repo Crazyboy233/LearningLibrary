@@ -16,3 +16,9 @@ void Executor::backward(Graph& graph, Tensor& loss) {
         node->backward();
     }
 }
+
+void Executor::zeroGrad(Graph& graph) {
+    for (auto& node : graph.nodes()) {
+        node.get()->output().zeroGrad();
+    }
+}

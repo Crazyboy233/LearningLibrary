@@ -16,10 +16,6 @@ public:
     Node(const Node&) = delete;
     Node& operator=(const Node&) = delete;
 
-    // void compute(){
-    //     op_->compute(inputs_, output_)
-    // }
-
     Op* op() const { return op_; }
     Tensor& output() { return output_; }
     const Tensor& output() const { return output_; }

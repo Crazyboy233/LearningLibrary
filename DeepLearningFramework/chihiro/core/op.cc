@@ -99,3 +99,22 @@ void SubOp::backward(const std::vector<Tensor*>& input, Tensor& output) {
     input[1]->addGrad(result);
     // std::cout << "SubOp backward success" << std::endl;
 }
+
+void SumOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    std::cout << "begin SumOp::forward " << std::endl;
+    const std::vector<double>& x = inputs[0]->value();
+    double sum = 0.0;
+    for (double v : x) {
+        sum += v;
+    }
+    std::cout << "SumOp::forward sum = " << std::endl;
+    output.setValue(std::vector<double>{sum}); // scalar
+}
+
+void SumOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const std::vector<double>& grad_out = output.grad();
+    Tensor& x = *inputs[0];
+
+    std::vector<double> grad_x(x.value().size(), grad_out[0]);
+    x.addGrad(grad_x);
+}

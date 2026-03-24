@@ -2,4 +2,5 @@
 my_venv/
 tf-env/
 torch-env/
+.vscode/
 a.out

@@ -12,14 +12,17 @@ void Executor::forward(Graph& graph) {
 }
 
 void Executor::backward(Graph& graph, Tensor& loss) {
+    if (loss.value().size() != 1) {
+        throw std::runtime_error("Loss must be scalar. Use ReduceOp (e.g., sum or mean).");
+    }
+
     auto order = graph.topoSort();
     // 加这行，打印节点总数和最后一个节点的op
     // std::cout << "拓扑排序节点数：" << order.size() 
     //       << " 最后一个节点op：" << order.back()->op()->name() << std::endl;
-    loss.addGrad(std::vector<double>(loss.value().size(), 1.0));  // dL/dL = 1
+    // loss.addGrad(std::vector<double>(loss.value().size(), 1.0));  // dL/dL = 1
     // 优化：
-    // assert(loss.value().size() == 1);
-    // loss.addGrad({1.0});
+    loss.addGrad({1.0});
 
     
     for(auto it = order.rbegin(); it != order.rend(); ++it) {

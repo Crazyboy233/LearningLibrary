@@ -41,3 +41,10 @@ class SubOp : public Op {
 
     const std::string name() const override { return "Sub"; }
 };
+
+class SumOp : public Op {
+    void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+    void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+
+    const std::string name() const override { return "Sum"; }
+};

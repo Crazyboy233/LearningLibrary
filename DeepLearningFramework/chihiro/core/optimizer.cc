@@ -2,8 +2,11 @@
 
 void SGD::step() {
     for (auto& p : params_) {
-        double new_value = p->value() - lr_ * p->grad();
-        p->setValue(new_value);
+        std::vector<double> result;
+        for (int i = 0; i < p->value().size() && i < p->grad().size(); ++i) {
+            result.push_back(p->value()[i] - lr_ * p->grad()[i]); 
+        }
+        p->setValue(result);
     }
 }
 

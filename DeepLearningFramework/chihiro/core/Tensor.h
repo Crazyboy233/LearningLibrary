@@ -1,29 +1,44 @@
 #pragma once
+#include <vector>
+#include <iostream>
 
 class Node;
 
 class Tensor{
 public:
-    Tensor() :value_(0.0), grad_(0.0) {}
+    Tensor() {}
 
-    explicit Tensor(double value){
+    explicit Tensor(const std::vector<double> value){
         value_ = value;
+        grad_.resize(value_.size(), 0.0);
     }
     
     ~Tensor(){}
 
-    double value() { return value_; }
-    void setValue(const double& value) { value_ = value; }
+    std::vector<double> value() { return value_; }
+    void setValue(const std::vector<double> value) {
+        // 这里同步整个Tensor的状态, tensor 是一个整体
+        value_ = value;
+
+        if (grad_.size() != value_.size()) {
+            grad_.assign(value_.size(), 0.0);
+        }
+    }
+
+    void resize(size_t n) {
+        value_.resize(n);
+        grad_.assign(n, 0.0);
+    }
 
     Node* producer() { return producer_; }
     void setProducer(Node* node) { producer_ = node; }
 
-    double grad() { return grad_; }
-    void addGrad(double grad) { grad_ += grad; }    // 累计梯度
-    void zeroGrad() { grad_ = 0.0; }
+    std::vector<double> grad() { return grad_; }
+    void addGrad(std::vector<double> grad);    // 累计梯度
+    void zeroGrad();
 
 private:
     Node* producer_ = nullptr;
-    double value_;
-    double grad_;
+    std::vector<double> value_;
+    std::vector<double> grad_;
 };

@@ -1,97 +1,159 @@
-【整体设计分层】
-当前系统分为几个核心模块：
+# Mini Deep Learning Framework (C++)
 
-1. Tensor（数据层）
+这是一个从 0 实现的简化版深度学习框架，目标是：
 
-- 存储：
-  - value（double）
-  - grad（double）
-  - producer（Node*） 记录“这个 Tensor 是由哪个 Node 计算出来的
-- 支持：
-  - value() / setValue()
-  - grad() / setGrad()
-- 当前是标量（scalar），尚未支持向量或多维
+- 理解自动微分（autograd）的核心机制
+- 理解计算图（computation graph）的执行流程
+- 搭建一个最小可训练系统（forward + backward + optimizer）
 
-2. Parameter（继承自 Tensor）
-- 表示“可训练参数”
-- 和普通 Tensor 的区别在于：
-  - 会被 Optimizer 更新
-- 当前没有 requires_grad 机制（默认都参与反向传播）
+当前支持：
 
-3. Op（算子层）
-- 抽象类，定义：
-  - forward(inputs, output)
-  - backward(inputs, output)
-- 已实现：
-  - AddOp
-  - SubOp
-  - MulOp
+- ✅ 标量计算（scalar）
+- ✅ 静态计算图（DAG）
+- ✅ 自动微分（backward）
+- ✅ 基于计算图的 forward / backward 执行
+- ✅ SGD 参数更新
+- ✅ 多节点链式计算
 
-4. Node（计算节点）
-- 成员：
-  - Op- op_
-  - std::vector<Tensor-> inputs_
-  - Tensor output_
-- 方法：
-  - forward() → 调用 op_->forward
-  - backward() → 调用 op_->backward
-- 每个 Node 表示一个计算操作实例
-- output Tensor 存在 Node 内部
+---
+# 🚀 Quick Start
+```c++
+// 目前参考 test/04_test.cpp
+```
+# 工作流程
+## 1. Computation Graph（计算图）
+- 整个系统基于 **DAG（有向无环图）**
+- 每个 `Node` 表示一次计算
+- `Tensor` 在节点之间流动
+```
+x ----\
+    * ----> y
+w ----/
+```
 
-5. Graph（计算图）
-- 存储：
-  - std::vector<std::unique_ptr<Node>> nodes_
-- 提供：
-  - addNode(std::unique_ptr<Node>)
-- 当前：
-  - 已实现拓扑排序（保证 DAG 顺序执行）
-  - Node 之间通过 Tensor- 建立依赖关系
+## 2. Forward Pass
+执行流程：
+1. 对 Graph 进行拓扑排序
+2. 按顺序执行每个 Node：
+    ```c++
+    op->forward(inputs, output);
+    ```
+3. 得到最终输出（如 loss）
+      
+## 3. Backward Pass（自动微分）
+1. 初始化：
+    ```c++
+    loss.grad = 1
+    ```
+2. 按拓扑逆序执行：
+    ```c++
+    op->backward(inputs, output);
+    ```
+3. 梯度沿计算图反向传播
 
-6. Executor（执行器）
-- forward(Graph)：
-  - 按拓扑顺序执行 Node::forward()
-- backward(Graph, loss)：
-  - 从 loss 开始反向传播
-  - loss.grad = 1
-  - 按拓扑逆序执行 Node 的 backward
-- zeroGrad(Graph)：
-  - 清空所有 Node.output 的 grad
+## 4. Parameter Update
+使用 SGD：
+```c++
+w = w - lr * grad
+```
+---
+# 🧩 Core Components
 
-7. Optimizer（优化器）
-- 已实现 SGD：
-  - 持有 std::vector<Parameter->
-  - step()：w = w - lr - grad
-  - zeroGrad()：清空 Parameter.grad
+## Tensor
+数据的基本单位：
+- `value`：前向值
+- `grad`：梯度
+- `producer`：生成该 Tensor 的 Node
 
-【当前能力】
-系统已经支持：
-- 构建简单计算图（DAG）
-- forward 计算
-- backward 自动微分
-- 参数更新（SGD）
-- 多节点链式计算
-- 多 Op 组合
+👉 Tensor = 数据 + 梯度 + 图信息
 
-【当前设计特点】
-- Graph 是静态 DAG（非动态图）
-- Tensor 仅支持 scalar（无 shape）
-- Parameter 与 Tensor 分离（语义区分）
-- Executor 和 Optimizer 解耦
-- backward 是显式实现（非 tape）
+## Parameter
+继承自 Tensor：
+- 表示**可训练参数**
+- 会被 Optimizer 更新
 
-【当前局限】
-- Tensor 不支持 vector / shape / broadcast
-- 不支持 batch
-- 不支持多输出 Node
-- 无 requires_grad 控制
-- Op 接口较简化（未区分 forward/backward cache）
-- 无内存优化（Tensor 生命周期简单）
-- 无 Python 前端
+## Op（Operator）
+定义计算规则：
+```c++
+virtual void forward(...)
+virtual void backward(...)
+```
+当前实现：
+- AddOp
+- SubOp
+- MulOp
+- SumOp
 
-【接下来想做的方向】
-希望在这个基础上继续扩展，比如：
-- 多参数模型（如 y = wx + b）
-- Tensor 升级（支持向量/shape）
-- 优化器升级（Momentum / Adam）
-- 更通用的计算图（多输入多输出）
-- 更贴近真实框架（如 PyTorch）的设计
+## Node
+一次具体计算：
+- 持有 Op
+- 持有输入 Tensor
+- 产生输出 Tensor
+
+👉 Node = Op 的一次执行实例
+
+## Graph
+计算图容器：
+- 存储所有 Node
+- 负责拓扑排序
+- 管理依赖关系
+
+## Executor
+执行器：
+- forward：执行前向计算
+- backward：执行反向传播
+
+## Optimizer
+参数更新模块：
+- 当前实现：SGD
+- 管理 Parameter 列表
+
+---
+# 🏗️ Design Choices
+
+## 1. 静态计算图（Static Graph）
+Graph 在执行前构建完成
+
+**优点：**
+- 执行逻辑简单
+- 易于理解
+
+**缺点：**
+- 不如动态图灵活（相比 PyTorch）
+
+## 2. 显式 Backward（非自动记录）
+每个 Op 手动实现 backward：
+**优点：**
+- 清晰理解梯度传播
+- 更贴近框架底层实现
+
+**缺点：**
+- 开发成本较高
+
+## 3. Tensor / Parameter 分离
+- Tensor：中间变量
+- Parameter：需要更新的变量
+
+👉 明确优化目标
+
+---
+# 当前限制
+当前版本是最小实现，存在一些限制：
+- ❌ 仅支持 scalar（无 shape）
+- ❌ 不支持 batch
+- ❌ 不支持 broadcast
+- ❌ 不支持多输出 Node
+- ❌ 无 requires_grad 控制
+- ❌ 无内存优化
+- ❌ 无动态图机制
+
+---
+# Roadmap
+未来计划：
+- 支持 Tensor shape（向量 / 矩阵）
+- 支持 broadcast
+- 引入 requires_grad
+- 支持多输入 / 多输出 Node
+- 实现 Adam / Momentum
+- 动态计算图（类似 PyTorch）
+- C++ / Python 前端接口

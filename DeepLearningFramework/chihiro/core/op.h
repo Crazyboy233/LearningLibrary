@@ -30,12 +30,13 @@ public:
     ~MulOp() {}
 
     void forward(const std::vector<Tensor*>& input, Tensor& output) override;
-    void backward(const std::vector<Tensor*>& input, Tensor& output) override;
+    void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
 
     const std::string name() const override { return "Mul"; }
 };
 
 class SubOp : public Op {
+public:
     void forward(const std::vector<Tensor*>& input, Tensor& output) override;
     void backward(const std::vector<Tensor*>& input, Tensor& output) override;
 
@@ -43,6 +44,7 @@ class SubOp : public Op {
 };
 
 class SumOp : public Op {
+public:
     void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
     void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
 

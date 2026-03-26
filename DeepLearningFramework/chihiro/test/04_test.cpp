@@ -40,6 +40,10 @@ int main() {
     SumOp sum_op;
 
     Graph graph;
+    
+    // 将外部节点注册进graph，以便清理外部节点的grad，从而避免累计脏数据。
+    graph.addInput(&x);
+    graph.addInput(&target);
 
     // y = x * x
     auto mul_node = std::make_unique<Node>(&mul_op, std::vector<Tensor*>{&w, &x});
@@ -63,14 +67,15 @@ int main() {
     std::cout << "图 构造完成" << std::endl;
     // 定义优化器
     SGD optimizer({&w}, 0.01);
-    Executor executor;
+    Executor executor(graph);
 
     for (int i = 0; i < 100; ++i) {
-        executor.zeroGrad(graph);
+        executor.zeroGrad();
         optimizer.zeroGrad();
-        executor.forward(graph);
+
+        executor.forward();
         Tensor& loss = sum_ptr->output();
-        executor.backward(graph, loss);
+        executor.backward(loss);
         optimizer.step();
 
         std::cout << "step ：" << i;

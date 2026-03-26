@@ -4,11 +4,14 @@
 
 class Executor{
 public:
-    Executor() {}
-    ~Executor() {}
+    explicit Executor(Graph& graph) 
+        : graph_(&graph), order_(graph.topoSort()) {}
 
-    void forward(Graph& graph);
-    void backward(Graph& graph, Tensor& loss);
+    void forward();
+    void backward(Tensor& loss);
 
-    void zeroGrad(Graph& graph);
+    void zeroGrad();
+private:
+    Graph* graph_;
+    std::vector<Node*> order_;
 };

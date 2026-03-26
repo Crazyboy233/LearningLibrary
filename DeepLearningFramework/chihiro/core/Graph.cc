@@ -59,3 +59,11 @@ std::vector<Node*> Graph::topoSort() {
 
     return result;
 }
+
+void Graph::addInput(Tensor* t) {
+    inputs_.push_back(t);
+}
+
+std::vector<Tensor*> Graph::inputs() {
+    return inputs_;
+}

@@ -19,6 +19,11 @@ public:
     // nodes_ 不建议通过排序修改，这样会导致图结构发生变化
     std::vector<Node*> topoSort();
 
+    // 注册外部输入数据，以便对外部数据进行zerograd。
+    void addInput(Tensor* t);
+    std::vector<Tensor*> inputs();
+
 private:
     std::vector<std::unique_ptr<Node>> nodes_;
+    std::vector<Tensor*> inputs_;
 };

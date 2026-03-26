@@ -101,13 +101,13 @@ void SubOp::backward(const std::vector<Tensor*>& input, Tensor& output) {
 }
 
 void SumOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
-    std::cout << "begin SumOp::forward " << std::endl;
+    // std::cout << "begin SumOp::forward " << std::endl;
     const std::vector<double>& x = inputs[0]->value();
     double sum = 0.0;
     for (double v : x) {
         sum += v;
     }
-    std::cout << "SumOp::forward sum = " << std::endl;
+    // std::cout << "SumOp::forward sum = " << std::endl;
     output.setValue(std::vector<double>{sum}); // scalar
 }
 

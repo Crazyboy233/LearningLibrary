@@ -86,7 +86,7 @@ int main() {
                 
         }
         std::cout << "]" << "| loss = [ " ;
-        for (int i = 0; i < w.value().size(); i++) {
+        for (int i = 0; i < loss_ptr->output().value().size(); i++) {
             std::cout <<loss_ptr->output().value()[i] << ",";
                 
         }

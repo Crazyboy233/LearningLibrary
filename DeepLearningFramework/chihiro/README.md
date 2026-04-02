@@ -86,6 +86,8 @@ virtual void backward(...)
 - MulOp
 - SumOp
 - MatMulOp
+- ReLUOp
+- SigmodOp
 
 ## Node
 一次具体计算：

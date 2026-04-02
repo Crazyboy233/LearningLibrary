@@ -170,3 +170,49 @@ void MatMulOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
     inputs[0]->addGrad(dA);
     inputs[1]->addGrad(dB);
 }
+
+// \sigma(x) = \max(0, x)
+void ReLUOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const auto& x = inputs[0]->value();
+    std::vector<double> result(x.size());
+    for (size_t i = 0; i < x.size(); ++i) {
+        result[i] = x[i] > 0.0 ? x[i] : 0.0;  
+    }
+    output.setValue(inputs[0]->shape(), result);
+}
+
+void ReLUOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const auto& grad = output.grad();
+    const auto& x = inputs[0]->value();
+
+    std::vector<double> dx(x.size());
+    for (size_t i = 0; i < x.size(); ++i) {
+        dx[i] = x[i] > 0.0 ? grad[i] : 0.0;
+    }
+
+    inputs[0]->addGrad(dx);
+}
+
+// \sigma(x) = \frac{1}{1+e^{-x}}
+void SigmodOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const auto& x = inputs[0]->value();
+    
+    std::vector<double> result(x.size());
+    for(size_t i = 0; i < x.size(); ++i) {
+        result[i] = 1.0 / (1.0 + std::exp(-x[i]));
+    }
+
+    output.setValue(inputs[0]->shape(), result);
+}
+
+void SigmodOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const auto& grad = output.grad();
+    const auto& y = output.value(); // 这里直接取 forward 的输出值
+
+    std::vector<double> dx(y.size());
+    for (size_t i = 0; i < y.size(); ++i) {
+        dx[i] = grad[i] * y[i] *(1.0 - y[i]);
+    }
+
+    inputs[0]->addGrad(dx);
+}

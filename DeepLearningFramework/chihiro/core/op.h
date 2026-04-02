@@ -58,3 +58,17 @@ public:
 
     const std::string name() const override { return "MatMul"; }
 };
+
+class ReLUOp : public Op {
+    void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+    void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+
+    const std::string name() const override { return "ReLU"; }
+};
+
+class SigmodOp : public Op {
+    void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+    void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+
+    const std::string name() const override { return "Sigmod"; }
+};

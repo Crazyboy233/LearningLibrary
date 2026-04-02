@@ -2,25 +2,55 @@
 #include <iostream>
 #include <cassert>
 
-void AddOp::forward(const std::vector<Tensor*>& input, Tensor& output) {
-    assert(input[0]->shape() == input[1]->shape());
-
-    std::vector<double> x = input[0]->value();
-    std::vector<double> y = input[1]->value();
+void AddOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const auto& shapeA = inputs[0]->shape();
+    const auto& shapeB = inputs[1]->shape();
+    const auto& A = inputs[0]->value();
+    const auto& B = inputs[1]->value();
     
-    std::vector<double> result;
-    for (int i = 0; i < x.size() && i < y.size(); ++i) {
-        result.push_back(x[i] + y[i]);
+    // 目前只支持二维，且只处理 [m,n] + [1,n] 的 broadcast
+    assert(shapeA.size() == 2 && shapeB.size() == 2);
+    assert(shapeA[1] == shapeB[1]); // 列数保持一致
+    assert(shapeB[0] == 1 || shapeA[0] == shapeB[0]);   // B 的第 0 维是 1 或者两者的 shape 完全一致。
+
+    size_t m = shapeA[0];
+    size_t n = shapeA[1];
+
+    std::vector<double> result(m * n);
+    
+    for (size_t i = 0; i < m; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            size_t b_i = (shapeB[0] == 1) ? 0 : i;  // broadcast 时 B 的行索引固定为 0
+            result[i * n + j] = A[i * n + j] + B[b_i * n + j];
+        }
     }
-    output.setValue(input[0]->shape(), result);
+    output.setValue(shapeA, result);
 }
 
-void AddOp::backward(const std::vector<Tensor*>& input, Tensor& output) {
-    assert(input[0]->shape() == input[1]->shape());
-    std::vector<double> grad = output.grad();
+void AddOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    // 目前只支持二维，且只处理 [m,n] + [1,n] 的 broadcast
+    const auto& shapeA = inputs[0]->shape();
+    const auto& shapeB = inputs[1]->shape();
+    const auto& grad = output.grad();
 
-    input[0]->addGrad(grad);
-    input[1]->addGrad(grad);
+    size_t m = shapeA[0];
+    size_t n = shapeA[1];
+
+    // dA 直接透传
+    inputs[0]->addGrad(grad);
+    
+    // dB：如果 B 被 broadcast 了，沿第0维求和折叠回 [1,n]
+    if (shapeB[0] == 1) {
+        std::vector<double> dB(n, 0.0);
+        for(size_t i = 0; i < m; ++i) {
+            for (size_t j = 0; j < n; ++j) {
+                dB[j] += grad[i * n + j];
+            }
+        }
+        inputs[1]->addGrad(dB);
+    } else {
+        inputs[1]->addGrad(grad);
+    } 
 }
 
 
@@ -71,30 +101,59 @@ void MulOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
     }
 }
 
-void SubOp::forward(const std::vector<Tensor*>& input, Tensor& output) {
-    assert(input[0]->shape() == input[1]->shape());
-    std::vector<double> x = input[0]->value();
-    std::vector<double> y = input[1]->value();
+void SubOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    const auto& shapeA = inputs[0]->shape();
+    const auto& shapeB = inputs[1]->shape();
+    const auto& A = inputs[0]->value();
+    const auto& B = inputs[1]->value();
+    
+    // 目前只支持二维，且只处理 [m,n] + [1,n] 的 broadcast
+    assert(shapeA.size() == 2 && shapeB.size() == 2);
+    assert(shapeA[1] == shapeB[1]); // 列数保持一致
+    assert(shapeB[0] == 1 || shapeA[0] == shapeB[0]);   // B 的第 0 维是 1 或者两者的 shape 完全一致。
 
-    std::vector<double> result;
-    for (int i = 0; i < x.size() && i < y.size(); ++i) {
-        result.push_back(x[i] - y[i]);
+    size_t m = shapeA[0];
+    size_t n = shapeA[1];
+
+    std::vector<double> result(m * n);
+    
+    for (size_t i = 0; i < m; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            size_t b_i = (shapeB[0] == 1) ? 0 : i;  // broadcast 时 B 的行索引固定为 0
+            result[i * n + j] = A[i * n + j] - B[b_i * n + j];
+        }
     }
-
-    output.setValue(input[0]->shape(), result);
+    output.setValue(shapeA, result);
 }
 
-void SubOp::backward(const std::vector<Tensor*>& input, Tensor& output) {
-    assert(input[0]->shape() == input[1]->shape());
-    std::vector<double> grad = output.grad();
+void SubOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
+    // 目前只支持二维，且只处理 [m,n] + [1,n] 的 broadcast
+    const auto& shapeA = inputs[0]->shape();
+    const auto& shapeB = inputs[1]->shape();
+    const auto& grad = output.grad();
 
-    std::vector<double> result;
-    for (int i = 0; i < grad.size(); ++i) {
-        result.push_back(grad[i] * -1);
+    size_t m = shapeA[0];
+    size_t n = shapeA[1];
+
+    // dA 直接透传
+    inputs[0]->addGrad(grad);
+    
+    // dB：如果 B 被 broadcast 了，沿第0维求和折叠回 [1,n]
+    if (shapeB[0] == 1) {
+        std::vector<double> dB(n, 0.0);
+        for(size_t i = 0; i < m; ++i) {
+            for (size_t j = 0; j < n; ++j) {
+                dB[j] -= grad[i * n + j];   // SubOp 对 B 的梯度是负的
+            }
+        }
+        inputs[1]->addGrad(dB);
+    } else {
+        std::vector<double> dB(grad.size());
+        for (size_t i = 0; i < dB.size(); ++i) {
+            dB[i] = -grad[i];
+        }
+        inputs[1]->addGrad(dB);
     }
-
-    input[0]->addGrad(grad);
-    input[1]->addGrad(result);
 }
 
 void SumOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {

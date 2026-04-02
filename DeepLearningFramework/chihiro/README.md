@@ -18,8 +18,8 @@
 ---
 # 🚀 Quick Start
 ```c++
-// 目前版本参考 test/05_test.cpp test/05_test2.cpp 
-// 综合测试参考 test/05_test3.cpp
+// 目前版本参考 test/07_test.cpp
+// 综合测试参考 test/06_test.cpp
 ```
 # 工作流程
 ## 1. Computation Graph（计算图）

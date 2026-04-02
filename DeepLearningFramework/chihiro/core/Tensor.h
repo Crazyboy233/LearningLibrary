@@ -1,29 +1,35 @@
 #pragma once
 #include <vector>
 #include <iostream>
+#include <assert.h>
 
 class Node;
 
 class Tensor{
 public:
-    Tensor() {}
+    Tensor() = default;
 
-    explicit Tensor(const std::vector<double> value){
+    // 构造时指定 shape，data 按行主序（row-major）展开
+    explicit Tensor(const std::vector<size_t>& shape, const std::vector<double>& value){
+        shape_ = shape;
         value_ = value;
         grad_.resize(value_.size(), 0.0);
     }
     
     ~Tensor(){}
 
-    std::vector<double> value() { return value_; }
-    void setValue(const std::vector<double> value) {
-        // 这里同步整个Tensor的状态, tensor 是一个整体
-        value_ = value;
+    const std::vector<double>& value() { return value_; }
+    void updateValue(const std::vector<double>& value);
+    void setValue(const std::vector<size_t>& shape, const std::vector<double>& value);
 
-        if (grad_.size() != value_.size()) {
-            grad_.assign(value_.size(), 0.0);
-        }
-    }
+    const std::vector<size_t>& shape() const { return shape_; } 
+    size_t ndim() const { return shape_.size(); }
+    size_t size() const { return value_.size(); }
+
+    // 二维访问（主要给 MatMulOp 使用）
+    size_t rows() const { assert(shape_.size() == 2); return shape_[0]; }
+    size_t cols() const { assert(shape_.size() == 2); return shape_[1]; } 
+
 
     void resize(size_t n) {
         value_.resize(n);
@@ -38,7 +44,9 @@ public:
     void zeroGrad();
 
 private:
-    Node* producer_ = nullptr;
+    std::vector<size_t> shape_;
     std::vector<double> value_;
     std::vector<double> grad_;
+    Node* producer_ = nullptr;
+
 };

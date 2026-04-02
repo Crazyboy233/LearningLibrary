@@ -50,3 +50,11 @@ public:
 
     const std::string name() const override { return "Sum"; }
 };
+
+class MatMulOp : public Op {
+public:
+    void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+    void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
+
+    const std::string name() const override { return "MatMul"; }
+};

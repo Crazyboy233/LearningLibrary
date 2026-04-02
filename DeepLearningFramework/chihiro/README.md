@@ -18,7 +18,8 @@
 ---
 # 🚀 Quick Start
 ```c++
-// 目前参考 test/04_test.cpp
+// 目前版本参考 test/05_test.cpp test/05_test2.cpp 
+// 综合测试参考 test/05_test3.cpp
 ```
 # 工作流程
 ## 1. Computation Graph（计算图）
@@ -39,7 +40,7 @@ w ----/
     op->forward(inputs, output);
     ```
 3. 得到最终输出（如 loss）
-      
+   
 ## 3. Backward Pass（自动微分）
 1. 初始化：
     ```c++
@@ -63,6 +64,7 @@ w = w - lr * grad
 数据的基本单位：
 - `value`：前向值
 - `grad`：梯度
+- `shape`：形状
 - `producer`：生成该 Tensor 的 Node
 
 👉 Tensor = 数据 + 梯度 + 图信息
@@ -83,6 +85,7 @@ virtual void backward(...)
 - SubOp
 - MulOp
 - SumOp
+- MatMulOp
 
 ## Node
 一次具体计算：
@@ -139,7 +142,6 @@ Graph 在执行前构建完成
 ---
 # 当前限制
 当前版本是最小实现，存在一些限制：
-- ❌ 仅支持 scalar（无 shape）
 - ❌ 不支持 batch
 - ❌ 不支持 broadcast
 - ❌ 不支持多输出 Node
@@ -150,7 +152,6 @@ Graph 在执行前构建完成
 ---
 # Roadmap
 未来计划：
-- 支持 Tensor shape（向量 / 矩阵）
 - 支持 broadcast
 - 引入 requires_grad
 - 支持多输入 / 多输出 Node

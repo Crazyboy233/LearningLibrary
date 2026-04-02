@@ -15,3 +15,22 @@ void Tensor::zeroGrad() {
         grad = 0.0;
     }
 }
+
+void Tensor::updateValue(const std::vector<double>& value) {
+    assert(value.size() == value_.size());
+    value_ = value;
+}   
+
+void Tensor::setValue(const std::vector<size_t>& shape, const std::vector<double>& value) {
+    // 这里同步整个Tensor的状态, tensor 是一个整体
+    size_t total = 1;
+    for (auto s : shape) {
+        total *= s;
+    }
+    assert(total == value.size());  // shape 和数据量必须匹配。
+
+    shape_ = shape;
+    value_ = value;
+
+    grad_.assign(value_.size(), 0.0);   // 梯度清零
+}

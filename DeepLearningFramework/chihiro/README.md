@@ -8,7 +8,7 @@
 
 当前支持：
 
-- ✅ 标量计算（scalar）
+- ✅ 二维矩阵计算
 - ✅ 静态计算图（DAG）
 - ✅ 自动微分（backward）
 - ✅ 基于计算图的 forward / backward 执行

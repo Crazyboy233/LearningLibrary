@@ -4,6 +4,10 @@
 
 void Executor::forward() {
     // auto order = graph.topoSort();
+    // 检查 graph 所有输入 Tensor 是否已被赋值。
+    if (!graph_->validateInputs()) {
+        throw std::runtime_error("Graph has uninitialized input tensors");
+    }
     for(auto& node : order_) {
         node->forward();
     }
@@ -15,7 +19,7 @@ void Executor::backward(Tensor& loss) {
     }
 
     // auto order = graph.topoSort();
-    loss.addGrad({1.0});
+    loss.setGrad({1.0});
 
     for(auto it = order_.rbegin(); it != order_.rend(); ++it) {
         Node* node = *it;
@@ -29,4 +33,8 @@ void Executor::zeroGrad() {
     for (auto& t : graph_->inputs()) {
         t->zeroGrad();
     }
+}
+
+void Executor::rebuildOrder() {
+    order_ = graph_->topoSort();
 }

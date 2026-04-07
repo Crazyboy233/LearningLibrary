@@ -11,6 +11,8 @@ public:
     void backward(Tensor& loss);
 
     void zeroGrad();
+
+    void rebuildOrder();
 private:
     Graph* graph_;
     std::vector<Node*> order_;

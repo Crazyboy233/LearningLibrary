@@ -6,7 +6,7 @@
 
 class Linear {
 public:
-    Linear(size_t in_features, size_t out_fratures);
+    Linear(size_t in_features, size_t out_features);
     Tensor& forward(Tensor& input, Graph& graph);
 
     std::vector<Parameter*> parameter() {

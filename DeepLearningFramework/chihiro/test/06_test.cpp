@@ -11,7 +11,7 @@
 // g++ test/06_test.cpp ./core/*.cc -I./core/
 
 /* 该测试是基于 05_test3.cpp 增加了如下内容：
-    增加了 sigmod 和 ReLU，
+    增加了 sigmoid 和 ReLU，
     测试解决 XOR 问题：
     输入    输出
     0,0  →  0
@@ -56,7 +56,7 @@ int main() {
     
     MatMulOp matmul_op;
     ReLUOp relu_op;
-    SigmodOp sigmod_op;
+    SigmoidOp sigmod_op;
     SubOp sub_op;
     MulOp mul_op;
     SumOp sum_op;
@@ -129,7 +129,7 @@ int main() {
 /*
 该测试的图如下：
     h = X · W1                  # MatMul,  [4,2] · [2,4] = [4,4]
-    a = Sigmod(h)                 # 逐元素,  [4,4]
+    a = Sigmoid(h)                 # 逐元素,  [4,4]
     y = a · W2                  # MatMul,  [4,4] · [4,1] = [4,1]
     out = σ(y)                  # 逐元素,  [4,1]
     d = out - target            # 逐元素,  [4,1]

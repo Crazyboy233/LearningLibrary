@@ -33,7 +33,7 @@ int main() {
 
     Tensor target({4, 1}, {0.0, 1.0, 1.0, 0.0});
 
-    SigmodOp sigmod_op;
+    SigmoidOp sigmod_op;
     MulOp mul_op;
     SubOp sub_op;
     SumOp sum_op;

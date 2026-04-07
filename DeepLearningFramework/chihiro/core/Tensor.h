@@ -9,6 +9,9 @@ class Tensor{
 public:
     Tensor() = default;
 
+    Tensor(const Tensor&) = delete;
+    Tensor& operator=(const Tensor&) = delete;
+
     // 构造时指定 shape，data 按行主序（row-major）展开
     explicit Tensor(const std::vector<size_t>& shape, const std::vector<double>& value){
         shape_ = shape;
@@ -40,6 +43,10 @@ public:
     void setProducer(Node* node) { producer_ = node; }
 
     std::vector<double> grad() { return grad_; }
+    void setGrad(const std::vector<double>& grad) {
+        assert(grad.size() == grad_.size());
+        grad_ = grad;
+    }
     void addGrad(std::vector<double> grad);    // 累计梯度
     void zeroGrad();
 

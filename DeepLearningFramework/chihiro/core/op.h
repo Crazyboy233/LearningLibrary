@@ -66,9 +66,9 @@ class ReLUOp : public Op {
     const std::string name() const override { return "ReLU"; }
 };
 
-class SigmodOp : public Op {
+class SigmoidOp : public Op {
     void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
     void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
 
-    const std::string name() const override { return "Sigmod"; }
+    const std::string name() const override { return "Sigmoid"; }
 };

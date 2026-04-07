@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <queue>
 #include <iostream>
+#include <unordered_set>
 
 std::vector<Node*> Graph::topoSort() {
     std::unordered_map<Node*, int> indegree;
@@ -17,6 +18,8 @@ std::vector<Node*> Graph::topoSort() {
     // 建图
     for(auto& nodePtr : nodes_) {
         Node* node = nodePtr.get();
+        std::unordered_set<Node*> unique_producers;  // 记录已处理过的 producer
+
         for(Tensor* input : node->inputs()) {
             // 获取生成该张量的节点（即当前节点的前置依赖节点）
             Node* producer = input->producer();
@@ -24,8 +27,12 @@ std::vector<Node*> Graph::topoSort() {
             if(producer == nullptr) {
                 continue;
             }
-            indegree[node]++;
-            adj[producer].push_back(node);  // 邻接表：producer -> node（producer 指向 node）
+            // 同一个 producer 只计数一次
+            if(unique_producers.find(producer) == unique_producers.end()) {
+                unique_producers.insert(producer);
+                indegree[node]++;
+                adj[producer].push_back(node);  // 邻接表：producer -> node（producer 指向 node）
+            }
         }
     }
 
@@ -66,4 +73,23 @@ void Graph::addInput(Tensor* t) {
 
 std::vector<Tensor*> Graph::inputs() {
     return inputs_;
+}
+
+bool Graph::validateInputs() const {
+    for (Tensor* t : inputs_) {
+        if (t->value().empty()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::vector<Tensor*> Graph::getUninitializedInputs() const {
+    std::vector<Tensor*> result;
+    for (Tensor* t : inputs_) {
+        if (t->value().empty()) {
+            result.push_back(t);
+        }
+    }
+    return result;
 }

@@ -1,8 +1,8 @@
 #include "linear.h"
 #include <random>
 
-Linear::Linear(size_t in_features, size_t out_fratures)
-    :in_(in_features), out_(out_fratures)
+Linear::Linear(size_t in_features, size_t out_features)
+    :in_(in_features), out_(out_features)
 {
     /*
         in_ 是 in_features，这一层的输入维度，也就是 W 的行数
@@ -19,13 +19,13 @@ Linear::Linear(size_t in_features, size_t out_fratures)
     double bound = std::sqrt(1.0 / in_features);
     std::uniform_real_distribution<double> dist(-bound, bound);
 
-    std::vector<double> w_data(in_features * out_fratures);
+    std::vector<double> w_data(in_features * out_features);
     for (auto& v : w_data) {
         v = dist(rng);
     }
 
-    w_ = std::make_unique<Parameter>(std::vector<size_t>{in_features, out_fratures}, w_data);
-    b_ = std::make_unique<Parameter>(std::vector<size_t>{1, out_fratures}, std::vector<double>(out_fratures, 0.0));
+    w_ = std::make_unique<Parameter>(std::vector<size_t>{in_features, out_features}, w_data);
+    b_ = std::make_unique<Parameter>(std::vector<size_t>{1, out_features}, std::vector<double>(out_features, 0.0));
 }
 
 Tensor& Linear::forward(Tensor& input, Graph& graph) {

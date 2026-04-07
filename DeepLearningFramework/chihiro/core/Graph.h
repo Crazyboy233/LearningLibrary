@@ -9,6 +9,7 @@ public:
 
     void addNode(std::unique_ptr<Node> node) {
         nodes_.push_back(std::move(node));
+        graph_dirty_ = true;    // 标记图已被修改
     }
 
     const std::vector<std::unique_ptr<Node>>& nodes() const  {
@@ -23,7 +24,15 @@ public:
     void addInput(Tensor* t);
     std::vector<Tensor*> inputs();
 
+    // 验证所有输入 Tensor 是否已被赋值
+    bool validateInputs() const;
+    // 获取未赋值的输入 Tensor 列表
+    std::vector<Tensor*> getUninitializedInputs() const;
+
+    bool isDirty() const { return graph_dirty_; }
+    void clearDirty() { graph_dirty_ = false; }
 private:
     std::vector<std::unique_ptr<Node>> nodes_;
     std::vector<Tensor*> inputs_;
+    bool graph_dirty_ = false;
 };

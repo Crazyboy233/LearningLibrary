@@ -8,10 +8,13 @@ void AddOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
     const auto& A = inputs[0]->value();
     const auto& B = inputs[1]->value();
     
-    // 目前只支持二维，且只处理 [m,n] + [1,n] 的 broadcast
+    // 支持的 broadcast 模式：
+    // 1. [m, n] + [1, n]  (行广播：B 只有一行，广播到所有行)
+    // 2. [m, n] + [m, n]  (完全相同形状，逐元素相加)
+    // 注意：不支持列广播，列数必须相同
     assert(shapeA.size() == 2 && shapeB.size() == 2);
     assert(shapeA[1] == shapeB[1]); // 列数保持一致
-    assert(shapeB[0] == 1 || shapeA[0] == shapeB[0]);   // B 的第 0 维是 1 或者两者的 shape 完全一致。
+    assert(shapeB[0] == 1 || shapeA[0] == shapeB[0]);   // B 行数为1，或与 A 行数相同
 
     size_t m = shapeA[0];
     size_t n = shapeA[1];
@@ -60,7 +63,7 @@ void MulOp::forward(const std::vector<Tensor*>& input, Tensor& output) {
     std::vector<double> y = input[1]->value();
     std::vector<double> result;
 
-    for (int i = 0; i < x.size() && i < y.size(); ++i) {
+    for (size_t i = 0; i < x.size() && i < y.size(); ++i) {
         result.push_back(x[i] * y[i]);
     }
     output.setValue(input[0]->shape(), result);
@@ -89,7 +92,7 @@ void MulOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
         result1.reserve(x.size());
         result2.reserve(x.size());
 
-        for (int i = 0; i < x.size(); ++i) {
+        for (size_t i = 0; i < x.size(); ++i) {
             assert(x.size() == y.size() && x.size() == grad.size());
 
             result1.push_back(grad[i] * y[i]);
@@ -156,6 +159,9 @@ void SubOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
     }
 }
 
+// 将任意形状的输入求和为标量 shape {1}
+// 注意：此 Op 仅用于创建标量 loss，作为反向传播的起点
+// 不应将输出用于需要特定形状的运算（如 MatMul）
 void SumOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
     const std::vector<double>& x = inputs[0]->value();
     double sum = 0.0;
@@ -198,10 +204,12 @@ void MatMulOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
     if (grad.empty() ) {
         return;
     }
-
+    
     size_t m = inputs[0]->rows();
     size_t k = inputs[0]->cols();
     size_t n = inputs[1]->cols();
+
+    assert(grad.size() == m * n);
 
     const auto& A = inputs[0]->value();
     const auto& B = inputs[1]->value();
@@ -253,7 +261,7 @@ void ReLUOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
 }
 
 // \sigma(x) = \frac{1}{1+e^{-x}}
-void SigmodOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
+void SigmoidOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
     const auto& x = inputs[0]->value();
     
     std::vector<double> result(x.size());
@@ -264,7 +272,7 @@ void SigmodOp::forward(const std::vector<Tensor*>& inputs, Tensor& output) {
     output.setValue(inputs[0]->shape(), result);
 }
 
-void SigmodOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
+void SigmoidOp::backward(const std::vector<Tensor*>& inputs, Tensor& output) {
     const auto& grad = output.grad();
     const auto& y = output.value(); // 这里直接取 forward 的输出值
 

@@ -5,7 +5,8 @@
 
 void Tensor::addGrad(std::vector<double> grad) {
     assert(value_.size() == grad_.size());
-    for (int i = 0; i < grad_.size(); ++i) {
+    assert(grad.size() == grad_.size());
+    for (size_t i = 0; i < grad_.size(); ++i) {
         grad_[i] += grad[i];
     }
 }
@@ -19,6 +20,8 @@ void Tensor::zeroGrad() {
 void Tensor::updateValue(const std::vector<double>& value) {
     assert(value.size() == value_.size());
     value_ = value;
+    
+    grad_.assign(value_.size(), 0.0);   // 梯度清零
 }   
 
 void Tensor::setValue(const std::vector<size_t>& shape, const std::vector<double>& value) {
@@ -33,4 +36,7 @@ void Tensor::setValue(const std::vector<size_t>& shape, const std::vector<double
     value_ = value;
 
     grad_.assign(value_.size(), 0.0);   // 梯度清零
+
+    // 重置 producer_
+    producer_ = nullptr;
 }

@@ -14,12 +14,14 @@
 - ✅ 基于计算图的 forward / backward 执行
 - ✅ SGD 参数更新
 - ✅ 多节点链式计算
+- ✅ boardcast
+- ✅ Linear 层抽象
 
 ---
 # 🚀 Quick Start
 ```c++
-// 目前版本参考 test/07_test.cpp
-// 综合测试参考 test/06_test.cpp
+// 目前版本参考 test/08_xor_linear.cpp
+// 综合测试参考 test/08_xor_linear.cpp
 ```
 # 工作流程
 ## 1. Computation Graph（计算图）
@@ -113,7 +115,15 @@ virtual void backward(...)
 - 当前实现：SGD
 - 管理 Parameter 列表
 
+## Linear
+
+Layer 抽象层。
+
+- 封装 W 和 b。
+- 对外只暴露一个 `forward(input, graph)` 接口
+
 ---
+
 # 🏗️ Design Choices
 
 ## 1. 静态计算图（Static Graph）
@@ -145,7 +155,6 @@ Graph 在执行前构建完成
 # 当前限制
 当前版本是最小实现，存在一些限制：
 - ❌ 不支持 batch
-- ❌ 不支持 broadcast
 - ❌ 不支持多输出 Node
 - ❌ 无 requires_grad 控制
 - ❌ 无内存优化
@@ -154,7 +163,6 @@ Graph 在执行前构建完成
 ---
 # Roadmap
 未来计划：
-- 支持 broadcast
 - 引入 requires_grad
 - 支持多输入 / 多输出 Node
 - 实现 Adam / Momentum

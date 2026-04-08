@@ -36,7 +36,4 @@ void Tensor::setValue(const std::vector<size_t>& shape, const std::vector<double
     value_ = value;
 
     grad_.assign(value_.size(), 0.0);   // 梯度清零
-
-    // 重置 producer_
-    producer_ = nullptr;
 }

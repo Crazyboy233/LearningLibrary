@@ -168,3 +168,8 @@ Graph 在执行前构建完成
 - 实现 Adam / Momentum
 - 动态计算图（类似 PyTorch）
 - C++ / Python 前端接口
+
+---
+# 目前可能遇到的问题
+- `Tensor::updateValue` 是专门设计出来给 `optimizer` 使用的，为了是能够正常打印出来梯度，以便测试。（注：正常情况应使用 `Tensor::setValue`）
+- `Executor::zeroGrad` 是清理的图中节点和外部输入数据的梯度。`Parameter` 的清理是 `optimizer::zeroGrad` 做的。

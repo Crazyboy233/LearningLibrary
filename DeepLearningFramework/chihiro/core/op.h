@@ -60,6 +60,7 @@ public:
 };
 
 class ReLUOp : public Op {
+public:
     void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
     void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
 
@@ -67,6 +68,7 @@ class ReLUOp : public Op {
 };
 
 class SigmoidOp : public Op {
+public:
     void forward(const std::vector<Tensor*>& inputs, Tensor& output) override;
     void backward(const std::vector<Tensor*>& inputs, Tensor& output) override;
 

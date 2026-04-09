@@ -7,8 +7,7 @@ class Node;
 
 class Tensor{
 public:
-    Tensor() = default;
-
+    Tensor() = delete;
     Tensor(const Tensor&) = delete;
     Tensor& operator=(const Tensor&) = delete;
 

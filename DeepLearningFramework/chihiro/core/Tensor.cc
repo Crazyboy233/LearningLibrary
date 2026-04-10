@@ -1,39 +1,53 @@
 #include "Tensor.h"
+#include <unordered_set>
 
-#include <vector>
-#include <cassert>
+/*
+============================================================
+Tensor::backward()
 
-void Tensor::addGrad(std::vector<double> grad) {
-    assert(value_.size() == grad_.size());
-    assert(grad.size() == grad_.size());
-    for (size_t i = 0; i < grad_.size(); ++i) {
-        grad_[i] += grad[i];
+    从当前 Tensor(必须是标量 loss) 出发，反向遍历计算图
+
+    1、从 loss 开始，沿 grad_fn_ 链做拓扑排序(后序)
+    2、将逆拓扑排序依次调用每个 GradFn::apply()
+    3、将返回的梯度累加到对应输入 Tensor 的 grad_ 上
+
+注意：只处理 requires_grad = true 的 Tensor
+============================================================
+*/
+void Tensor::backward() {
+    if (size() != 1) {
+        throw std::runtime_error("backward() 只能从标量调用，请先用 ops::sum() 规约");
     }
-}
 
-void Tensor::zeroGrad() {
-    for (auto& grad : grad_) {
-        grad = 0.0;
-    }
-}
+    // loss 的初始梯度为 1.0
+    grad_ = {1.0};
 
-void Tensor::updateValue(const std::vector<double>& value) {
-    assert(value.size() == value_.size());
-    value_ = value;
-    
-    grad_.assign(value_.size(), 0.0);   // 梯度清零
-}   
+    /*
+    ----------------------------------------------------------
+    第一步：拓扑排序
+    从 loss 出发，沿 grad_fn_->saved_inputs_ 做 DFS
+    收集所有需要参与反向的 Tensor，得到逆拓扑序列表。
+    ----------------------------------------------------------
+    */
+    std::vector<TensorPtr> topo;        // 逆拓扑序（从 loss 到叶节点）
+    std::unordered_set<Tensor*> visited;
 
-void Tensor::setValue(const std::vector<size_t>& shape, const std::vector<double>& value) {
-    // 这里同步整个Tensor的状态, tensor 是一个整体
-    size_t total = 1;
-    for (auto s : shape) {
-        total *= s;
-    }
-    assert(total == value.size());  // shape 和数据量必须匹配。
+    // 递归 DFS, 收集节点
+    std::function<void(TensorPtr)> build_topo = [&](TensorPtr t) {
+        if (visited.count(t.get())) return;
+        visited.insert(t.get());
 
-    shape_ = shape;
-    value_ = value;
+        if (t->grad_fn_) {
+            for (auto& weak_input : t->grad_fn_->saved_inputs_) {
+                auto input = weak_input.lock();
+                if (input && input->requireGrad()) {
+                    build_topo(input);
+                }
+            }
+        }
 
-    grad_.assign(value_.size(), 0.0);   // 梯度清零
+        topo.push_back(t);  // 后序；先处理依赖，再压自己
+    };
+
+
 }

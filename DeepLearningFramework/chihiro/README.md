@@ -173,3 +173,15 @@ Graph 在执行前构建完成
 # 目前可能遇到的问题
 - `Tensor::updateValue` 是专门设计出来给 `optimizer` 使用的，为了是能够正常打印出来梯度，以便测试。（注：正常情况应使用 `Tensor::setValue`）
 - `Executor::zeroGrad` 是清理的图中节点和外部输入数据的梯度。`Parameter` 的清理是 `optimizer::zeroGrad` 做的。
+
+---
+# 静态图 & 动态图
+```
+Graph 持有 Node → Node 持有 Op + inputs + output
+Executor 做拓扑排序 + 驱动 forward/backward
+```
+```
+Tensor 自己记录 { op, inputs }  ← 这就是 autograd tape
+backward() 从 loss 出发，自动反向遍历
+没有显式 Graph，没有 Executor
+```

@@ -49,5 +49,37 @@ void Tensor::backward() {
         topo.push_back(t);  // 后序；先处理依赖，再压自己
     };
 
+    build_topo(shared_from_this());
 
+    /*
+    topo 现在是从叶节点到 loss 的顺序，反向遍历即逆拓扑序
+    ----------------------------------------------------------
+    第二步：逆拓扑序调用各 GradFn::apply()
+    ----------------------------------------------------------
+    */
+    for (auto it = topo.rbegin(); it != topo.rend(); ++it) {
+        TensorPtr t = *it;
+        
+        // 叶节点没有 grad_fn_,梯度已经累加完毕，跳过
+        if(!t->grad_fn_) {
+            continue;
+        }
+
+        // 拿到该节点的输出梯度
+        const std::vector<double>& grad_out = t->grad_;
+
+        // 调用 GradFn,得到各输入的梯度
+        auto grads = t->grad_fn_->apply(grad_out);
+
+        // 将梯度累加到对应输入 Tensor 上
+        const auto& inputs = t->grad_fn_->saved_inputs_;
+        assert(grads.size() == inputs.size());
+
+        for (size_t i = 0; i < inputs.size(); ++i) {
+            auto input = inputs[i].lock();
+            if (input && input->requireGrad()) {
+                input->addGrad(grads[i]);
+            }
+        }
+    }
 }

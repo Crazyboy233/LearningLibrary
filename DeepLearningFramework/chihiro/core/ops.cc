@@ -42,7 +42,7 @@ TensorPtr ops::add(const TensorPtr& a, const TensorPtr& b) {
     }
 
     if(!anyRequiresGrad({&a, &b})) {
-        return Tensor::creat(shapeA, result);
+        return Tensor::create(shapeA, result);
     }
 
     auto fn = std::make_shared<AddBackward>();
@@ -50,7 +50,7 @@ TensorPtr ops::add(const TensorPtr& a, const TensorPtr& b) {
     fn->shapeB_ = shapeB;
     fn->saved_inputs_ = {a, b};
 
-    return Tensor::creatFromOp(shapeA, result, fn);
+    return Tensor::createFromOp(shapeA, result, fn);
 }
 
 /*
@@ -77,7 +77,7 @@ TensorPtr ops::sub(const TensorPtr& a, const TensorPtr& b) {
     }
 
     if(!anyRequiresGrad({&a, &b})) {
-        return Tensor::creat(shapeA, result);
+        return Tensor::create(shapeA, result);
     }
 
     auto fn = std::make_shared<SubBackward>();
@@ -85,7 +85,7 @@ TensorPtr ops::sub(const TensorPtr& a, const TensorPtr& b) {
     fn->shapeB_ = shapeB;
     fn->saved_inputs_ = {a, b};
 
-    return Tensor::creatFromOp(shapeA, result, fn);
+    return Tensor::createFromOp(shapeA, result, fn);
 }
 
 /*
@@ -103,7 +103,7 @@ TensorPtr ops::mul(const TensorPtr& a, const TensorPtr& b) {
     }
 
     if(!anyRequiresGrad({&a, &b})) {
-        return Tensor::creat(a->shape(), result);
+        return Tensor::create(a->shape(), result);
     }
 
     auto fn = std::make_shared<MulBackward>();
@@ -116,7 +116,7 @@ TensorPtr ops::mul(const TensorPtr& a, const TensorPtr& b) {
         fn->saved_inputs_ = {a, b};
     }
     
-    return Tensor::creatFromOp(a->shape(), result, fn);
+    return Tensor::createFromOp(a->shape(), result, fn);
 }
 
 /*
@@ -141,7 +141,7 @@ TensorPtr ops::matmul(const TensorPtr& a, const TensorPtr& b) {
     }
 
     if (!anyRequiresGrad({&a, &b})) {
-        return Tensor::creat({m, n}, result);
+        return Tensor::create({m, n}, result);
     }
 
     auto fn = std::make_shared<MatMulBackward>();
@@ -152,7 +152,7 @@ TensorPtr ops::matmul(const TensorPtr& a, const TensorPtr& b) {
     fn->n_ = n;
     fn->saved_inputs_ = {a, b};
 
-    return Tensor::creatFromOp({m, n}, result, fn);
+    return Tensor::createFromOp({m, n}, result, fn);
 }
 
 /*
@@ -169,14 +169,14 @@ TensorPtr ops::relu(const TensorPtr& a) {
     }
 
     if (!anyRequiresGrad({&a})) {
-        return Tensor::creat(a->shape(), result);
+        return Tensor::create(a->shape(), result);
     }
 
     auto fn = std::make_shared<ReLUBackward>();
     fn->x_val_ = a->value();
     fn->saved_inputs_ = {a};
 
-    return Tensor::creatFromOp(a->shape(), result, fn);
+    return Tensor::createFromOp(a->shape(), result, fn);
 }
 
 /*
@@ -194,14 +194,14 @@ TensorPtr ops::sigmoid(const TensorPtr& a) {
     }
 
     if(!anyRequiresGrad({&a})) {
-        return Tensor::creat(a->shape(), result);
+        return Tensor::create(a->shape(), result);
     }
 
     auto fn = std::make_shared<SigmoidBackward>();
     fn->y_val_ = result;    // 这里保存输出值，反向要使用
     fn->saved_inputs_ = {a};
 
-    return Tensor::creatFromOp(a->shape(), result, fn);
+    return Tensor::createFromOp(a->shape(), result, fn);
 }
 
 /*
@@ -216,12 +216,12 @@ TensorPtr ops::sum(const TensorPtr& a) {
     }
 
     if (!anyRequiresGrad({&a})) {
-        return Tensor::creat({1}, {s});
+        return Tensor::create({1}, {s});
     }
 
     auto fn = std::make_shared<SumBackward>();
     fn->input_size_ = a->size();
     fn->saved_inputs_ = {a};
 
-    return Tensor::creatFromOp({1}, {s}, fn);
+    return Tensor::createFromOp({1}, {s}, fn);
 }

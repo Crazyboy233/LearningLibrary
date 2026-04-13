@@ -47,14 +47,14 @@ public:
     // ----------------- 工厂函数 -----------------
 
     // 创建叶节点：输入数据或者 Parameter
-    static TensorPtr creat(const std::vector<size_t> shape,
+    static TensorPtr create(const std::vector<size_t> shape,
                         const std::vector<double> value,
                         bool requires_grad = false) {
         return std::shared_ptr<Tensor>(new Tensor(shape, value, requires_grad, nullptr));
     }
 
     // 创建中间节点：由 ops 函数内部调用
-    static TensorPtr creatFromOp(const std::vector<size_t> shape,
+    static TensorPtr createFromOp(const std::vector<size_t> shape,
                                 const std::vector<double> value,
                                 std::shared_ptr<GradFn> grad_fn) {
         return std::shared_ptr<Tensor>(new Tensor(shape, value, /*requires_grad=*/true, grad_fn));

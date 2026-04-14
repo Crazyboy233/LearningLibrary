@@ -5,6 +5,7 @@
 class Parameter : public Tensor{
 public:
     using Tensor::Tensor;   // 这里是使用了 Tensor 的构造函数
+    using ParameterPtr = TensorPtr;
 
     bool isParameter() const { return true; }
 };

@@ -3,12 +3,24 @@
 
 void SGD::step() {
     for (auto& p : params_) {
-        std::vector<double> result;
-        assert(p->value().size() == p->grad().size());
-        for (size_t i = 0; i < p->value().size(); ++i) {
-            result.push_back(p->value()[i] - lr_ * p->grad()[i]); 
+        const auto& grad = p->grad();
+        auto val = p->value();  // 拷贝，updateValue 需要
+        auto& vel = velocity_[p.get()];
+
+        if (momentum_ == 0.0) {
+            // 普通SGD
+            for (size_t i = 0; i < val.size(); ++i) {
+                val[i] -= lr_ * grad[i];
+            }
+        } else {
+            // SGD + Momentum
+            for (size_t i = 0; i < val.size(); ++i) {
+                vel[i] = momentum_ * vel[i] + grad[i];
+                val[i] -= lr_ * vel[i];
+            }
         }
-        p->updateValue(result); // 这里优化器只更新参数值，不动 grad.
+        
+        p->updateValue(val); // 这里优化器只更新参数值，不动 grad.
     }
 }
 

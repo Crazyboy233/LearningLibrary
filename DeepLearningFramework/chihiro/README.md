@@ -9,25 +9,22 @@
 当前支持：
 
 - ✅ 二维矩阵计算
-- ✅ 静态计算图（DAG）
+- ✅ 动态计算图（DAG）
 - ✅ 自动微分（backward）
-- ✅ 基于计算图的 forward / backward 执行
 - ✅ SGD 参数更新
 - ✅ 多节点链式计算
 - ✅ boardcast
-- ✅ Linear 层抽象
 
 ---
 # 🚀 Quick Start
 ```c++
-// 目前版本参考 test/08_xor_linear.cpp
-// 综合测试参考 test/08_xor_linear.cpp
+// 目前版本参考 test/01_test_autograd.cpp
+// 综合测试参考 test/01_test_autograd.cpp
 ```
 # 工作流程
 ## 1. Computation Graph（计算图）
 - 整个系统基于 **DAG（有向无环图）**
-- 每个 `Node` 表示一次计算
-- `Tensor` 在节点之间流动
+- `Tensor` 是
 ```
 x ----\
     * ----> y
@@ -36,11 +33,7 @@ w ----/
 
 ## 2. Forward Pass
 执行流程：
-1. 对 Graph 进行拓扑排序
-2. 按顺序执行每个 Node：
-    ```c++
-    op->forward(inputs, output);
-    ```
+1. 调用`ops`下的函数构造计算图
 3. 得到最终输出（如 loss）
    
 ## 3. Backward Pass（自动微分）
@@ -48,11 +41,11 @@ w ----/
     ```c++
     loss.grad = 1
     ```
-2. 按拓扑逆序执行：
+    
+2. 逆拓扑排序并完成梯度沿计算图反向传播：
     ```c++
-    op->backward(inputs, output);
+    loss->backward();
     ```
-3. 梯度沿计算图反向传播
 
 ## 4. Parameter Update
 使用 SGD：
@@ -64,86 +57,66 @@ w = w - lr * grad
 
 ## Tensor
 数据的基本单位：
-- `value`：前向值
-- `grad`：梯度
-- `shape`：形状
-- `producer`：生成该 Tensor 的 Node
 
-👉 Tensor = 数据 + 梯度 + 图信息
+- `shape_`：形状
+
+- `value_`：前向值
+- `grad_`：梯度
+- `requires_grad_`：是否需要计算梯度
+- `grad_fn_`：生成该 Tensor 的 GradFn，`backward()` 做拓扑排序时需要沿着这条链往上爬，就是靠这个。
 
 ## Parameter
 继承自 Tensor：
 - 表示**可训练参数**
 - 会被 Optimizer 更新
 
-## Op（Operator）
+## Ops（Operator）
 定义计算规则：
 ```c++
-virtual void forward(...)
-virtual void backward(...)
+namespace ops {
+    TensorPtr add(const TensorPtr& a, const TensorPtr& b);
+    TensorPtr sub(const TensorPtr& a, const TensorPtr& b);
+    ...
+}
 ```
 当前实现：
-- AddOp
-- SubOp
-- MulOp
-- SumOp
-- MatMulOp
-- ReLUOp
-- SigmodOp
-
-## Node
-一次具体计算：
-- 持有 Op
-- 持有输入 Tensor
-- 产生输出 Tensor
-
-👉 Node = Op 的一次执行实例
-
-## Graph
-计算图容器：
-- 存储所有 Node
-- 负责拓扑排序
-- 管理依赖关系
-
-## Executor
-执行器：
-- forward：执行前向计算
-- backward：执行反向传播
+- add
+- sub
+- Mul
+- matmul
+- relu
+- sigmoid
+- sum
 
 ## Optimizer
 参数更新模块：
 - 当前实现：SGD
 - 管理 Parameter 列表
 
-## Linear
-
-Layer 抽象层。
-
-- 封装 W 和 b。
-- 对外只暴露一个 `forward(input, graph)` 接口
-
 ---
 
 # 🏗️ Design Choices
 
-## 1. 静态计算图（Static Graph）
-Graph 在执行前构建完成
+## 1. 动态计算图（Dynamic Graph）
+每次 forward 执行时动态构建计算图——每个 op 将对应的 GradFn 挂载到输出 Tensor 的 grad_fn_ 上，形成从 loss 到叶节点的有向链。backward() 沿此链逆拓扑遍历，完成梯度传播。
+**优点**：
+执行逻辑简单，forward 与图构建同步完成，无需额外 "compile" 步骤
+易于调试，每步输出的 Tensor 可直接检查值与 grad_fn
 
-**优点：**
-- 执行逻辑简单
-- 易于理解
-
-**缺点：**
-- 不如动态图灵活（相比 PyTorch）
+**缺点**：
+图结构运行时才确定，无法做静态图层面的算子融合或编译优化
+每次 forward 都重新建图，存在一定内存分配开销
 
 ## 2. 显式 Backward（非自动记录）
-每个 Op 手动实现 backward：
-**优点：**
-- 清晰理解梯度传播
-- 更贴近框架底层实现
+每个 Op 手动实现对应的 GradFn::apply()，明确写出对各输入的偏导数逻辑，而非通过 tape 或符号微分自动推导。
+**优点**：
+梯度传播路径清晰可读，便于理解链式法则的底层机制
+贴近 PyTorch 等框架的实际底层实现，适合学习参考
+方便针对特定 op 做数值稳定性优化（如 SigmoidBackward 复用 forward 输出值 y，避免重算 exp）
 
-**缺点：**
-- 开发成本较高
+**缺点**：
+每新增一个 Op 需同步实现 GradFn 子类，开发成本较高
+手写梯度易出错，需配合数值梯度验证（参见 numericalGrad()）
 
 ## 3. Tensor / Parameter 分离
 - Tensor：中间变量
@@ -163,24 +136,18 @@ Graph 在执行前构建完成
 ---
 # Roadmap
 未来计划：
-- 引入 requires_grad
-- 支持多输入 / 多输出 Node
 - 实现 Adam / Momentum
-- 动态计算图（类似 PyTorch）
 - C++ / Python 前端接口
-
----
-# 目前可能遇到的问题
-- `Tensor::updateValue` 是专门设计出来给 `optimizer` 使用的，为了是能够正常打印出来梯度，以便测试。（注：正常情况应使用 `Tensor::setValue`）
-- `Executor::zeroGrad` 是清理的图中节点和外部输入数据的梯度。`Parameter` 的清理是 `optimizer::zeroGrad` 做的。
 
 ---
 # 静态图 & 动态图
 ```
+静态图：
 Graph 持有 Node → Node 持有 Op + inputs + output
 Executor 做拓扑排序 + 驱动 forward/backward
 ```
 ```
+动态图：
 Tensor 自己记录 { op, inputs }  ← 这就是 autograd tape
 backward() 从 loss 出发，自动反向遍历
 没有显式 Graph，没有 Executor

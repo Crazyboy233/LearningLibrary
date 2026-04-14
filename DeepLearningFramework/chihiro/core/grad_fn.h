@@ -43,7 +43,7 @@ public:
     std::vector<size_t> shapeA_, shapeB_;   // 处理 broadcast
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "AddBackward"; }
+    std::string name() const override { return "AddBackward"; }
 };
 
 class SubBackward : public GradFn {
@@ -51,7 +51,7 @@ public:
     std::vector<size_t> shapeA_, shapeB_;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "SubBackward"; }
+    std::string name() const override { return "SubBackward"; }
 };
 
 class MulBackward : public GradFn {
@@ -60,7 +60,7 @@ public:
     bool same_tensor_ = false;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "MulBackward"; }
+    std::string name() const override { return "MulBackward"; }
 };
 
 class MatMulBackward : public GradFn {
@@ -69,7 +69,7 @@ public:
     size_t m_, k_, n_;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "MatMulBackward"; }
+    std::string name() const override { return "MatMulBackward"; }
 };
 
 class ReLUBackward : public GradFn {
@@ -77,7 +77,7 @@ public:
     std::vector<double> x_val_;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "ReLUBackward"; }
+    std::string name() const override { return "ReLUBackward"; }
 };
 
 class SigmoidBackward : public GradFn {
@@ -85,7 +85,7 @@ public:
     std::vector<double> y_val_; // sigmoid 反向只需要输出值
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "SigmoidBackward"; }
+    std::string name() const override { return "SigmoidBackward"; }
 };
 
 class SumBackward : public GradFn {
@@ -93,5 +93,5 @@ public:
     size_t input_size_;
     
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
-    std::string name() const { return "SumBackward"; }
+    std::string name() const override { return "SumBackward"; }
 };

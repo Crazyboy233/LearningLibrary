@@ -78,7 +78,7 @@ std::vector<std::vector<double>> MulBackward::apply(const std::vector<double>& g
     assert(grad.size() == n);
 
     if (same_tensor_) {
-        std::vector<double> dA;
+        std::vector<double> dA(n);
         for (size_t i = 0; i < n; ++i) {
             dA[i] = 2.0 * grad[i] * x_val_[i];
         }

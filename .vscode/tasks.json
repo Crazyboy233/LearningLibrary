@@ -1,0 +1,33 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "g++ build",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "-std=c++17",
+                "${file}",
+                "${workspaceFolder}/DeepLearningFramework/chihiro/core/grad_fn.cc",
+                // "${workspaceFolder}/DeepLearningFramework/chihiro/core/executor.cc",
+                // "${workspaceFolder}/DeepLearningFramework/chihiro/core/Graph.cc",
+                // "${workspaceFolder}/DeepLearningFramework/chihiro/core/Node.cc",
+                "${workspaceFolder}/DeepLearningFramework/chihiro/core/ops.cc",
+                // "${workspaceFolder}/DeepLearningFramework/chihiro/core/optimizer.cc",
+                "${workspaceFolder}/DeepLearningFramework/chihiro/core/Tensor.cc",
+                "-I${workspaceFolder}/DeepLearningFramework/chihiro/core",
+                "-o",
+                "/Users/chihiro/LearningLibrary/DeepLearningFramework/chihiro/build/${fileBasenameNoExtension}"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "detail": "g++ 编译 C++ 文件"
+        },
+    ]
+}

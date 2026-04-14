@@ -24,7 +24,7 @@ void Tensor::backward() {
 
     /*
     ----------------------------------------------------------
-    第一步：拓扑排序
+    第一步：DFS 拓扑排序
     从 loss 出发，沿 grad_fn_->saved_inputs_ 做 DFS
     收集所有需要参与反向的 Tensor，得到逆拓扑序列表。
     ----------------------------------------------------------
@@ -34,7 +34,7 @@ void Tensor::backward() {
 
     // 递归 DFS, 收集节点
     std::function<void(TensorPtr)> build_topo = [&](TensorPtr t) {
-        if (visited.count(t.get())) return;
+        if (visited.count(t.get())) return; // 已访问 则跳过
         visited.insert(t.get());
 
         if (t->grad_fn_) {
@@ -45,7 +45,6 @@ void Tensor::backward() {
                 }
             }
         }
-
         topo.push_back(t);  // 后序；先处理依赖，再压自己
     };
 

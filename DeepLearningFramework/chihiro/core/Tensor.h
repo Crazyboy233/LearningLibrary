@@ -81,9 +81,7 @@ public:
     
     // --------------- 累加梯度 ---------------
     void addGrad(const std::vector<double>& grad) {
-        if(grad.empty()) {
-            grad_.assign(value_.size(), 0.0);
-        }
+        assert(!grad.empty());
         assert(grad.size() == grad_.size());
         for (size_t i = 0; i < grad_.size(); ++i) {
             grad_[i] += grad[i];

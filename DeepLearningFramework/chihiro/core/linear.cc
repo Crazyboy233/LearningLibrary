@@ -2,7 +2,7 @@
 #include "ops.h"
 #include <random>
 
-Linear::Linear(size_t in_features, size_t out_features, unsigned seed = 42) 
+Linear::Linear(size_t in_features, size_t out_features, unsigned seed) 
     : in_features_(in_features), out_features_(out_features)
 {
     // ---- 随机引擎 ----

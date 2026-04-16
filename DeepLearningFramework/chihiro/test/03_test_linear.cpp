@@ -11,25 +11,27 @@
 // g++ -std=c++17 ./core/*.cc ./test/03_test_linear.cpp && ./a.out
  
 // 注：目前测试并不收敛，但是没有排查到原因
+// 目前定位到：在前向执行结束，反向进行topo排序时，topo序列应有4个Tensor：pred,diff,diff2,loss。
+// 但实际会有5个Tensor，第一个为0，后4个为正常的pred,diff,diff2,loss。
+// topo 排序是不对的！！！！
 
 int main() {
     // ── 数据 ──────────────────────────────────────────────
     auto x      = Tensor::create({4, 2}, {1,2, 2,1, 3,4, 4,3}, false);
-    auto target = Tensor::create({4, 1}, {2*1 + 3*2, 2*2 + 3*1, 2*3 + 3*4, 2*4 + 3*3}, false);
+    auto target = Tensor::create({4, 1}, {8, 7, 18, 17}, false);
  
     // ── 模型 ──────────────────────────────────────────────
-    Linear fc1(2, 1, /*seed=*/1);   // 隐藏层，把 2 维输入扩展到 4 维，学习非线性特征
- 
+    Linear fc1(2, 1, /*seed=*/1); 
     auto params = fc1.parameters();
 
-    SGD sgd(params, /*lr=*/0.5, /*momentum=*/0.9);
+    SGD sgd(params, /*lr=*/0.5 /*momentum=*/);
  
     // ── 训练 ──────────────────────────────────────────────
     const int EPOCHS = 10;
  
     std::cout << std::fixed << std::setprecision(6);    // 设置浮点数的输出格式
     std::cout << "epoch | loss\n";
- 
+
     for (int epoch = 0; epoch < EPOCHS; ++epoch) {
         // forward（x 是 [4,2]，一次处理全部样本）
         auto pred = fc1.forward(x);
@@ -40,6 +42,8 @@ int main() {
         auto loss  = ops::sum(diff2);
 
         // backward + update
+        // ∂loss/∂pred = 2×(pred−target)∂fc1.weight/∂loss ​= ∂pred/∂loss​ × ∂weight/∂pred​
+        // 这里 topo 排序，除去不需要计算 grad 的输入节点 x，target，应该有4个节点：pred,diff,diff2,loss。
         loss->backward();
         // if ((epoch + 1) % 100 == 0) {
             std::cout << "epoch " << (epoch + 1)

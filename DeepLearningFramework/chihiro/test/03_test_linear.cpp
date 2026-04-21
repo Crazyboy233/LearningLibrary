@@ -9,11 +9,6 @@
 
 // 编译命令
 // g++ -std=c++17 ./core/*.cc ./test/03_test_linear.cpp && ./a.out
- 
-// 注：目前测试并不收敛，但是没有排查到原因
-// 目前定位到：在前向执行结束，反向进行topo排序时，topo序列应有4个Tensor：pred,diff,diff2,loss。
-// 但实际会有5个Tensor，第一个为0，后4个为正常的pred,diff,diff2,loss。
-// topo 排序是不对的！！！！
 
 int main() {
     // ── 数据 ──────────────────────────────────────────────
@@ -24,10 +19,10 @@ int main() {
     Linear fc1(2, 1, /*seed=*/1); 
     auto params = fc1.parameters();
 
-    SGD sgd(params, /*lr=*/0.5 /*momentum=*/);
+    SGD sgd(params, /*lr=*/0.01 /*momentum=*/);
  
     // ── 训练 ──────────────────────────────────────────────
-    const int EPOCHS = 10;
+    const int EPOCHS = 100;
  
     std::cout << std::fixed << std::setprecision(6);    // 设置浮点数的输出格式
     std::cout << "epoch | loss\n";

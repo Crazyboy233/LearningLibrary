@@ -38,8 +38,7 @@ void Tensor::backward() {
         visited.insert(t.get());
 
         if (t->grad_fn_) {
-            for (auto& weak_input : t->grad_fn_->saved_inputs_) {
-                auto input = weak_input.lock();
+            for (auto& input : t->grad_fn_->saved_inputs_) {
                 if (input && input->requireGrad()) {
                     build_topo(input);
                 }
@@ -75,7 +74,7 @@ void Tensor::backward() {
         assert(grads.size() == inputs.size());
 
         for (size_t i = 0; i < inputs.size(); ++i) {
-            auto input = inputs[i].lock();
+            auto input = inputs[i];
             if (input && input->requireGrad()) {
                 input->addGrad(grads[i]);
             }

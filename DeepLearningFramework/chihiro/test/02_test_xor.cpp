@@ -10,8 +10,6 @@
 // 编译命令
 // g++ -std=c++17 ./core/*.cc ./test/02_test_xor.cpp && ./a.out
  
-// 注：目前测试并不收敛，但是没有排查到原因
-
 int main() {
     // ── 数据 ──────────────────────────────────────────────
     auto x      = Tensor::create({4, 2}, {0,0, 0,1, 1,0, 1,1}, false);
@@ -28,7 +26,7 @@ int main() {
     SGD sgd(params, /*lr=*/0.5, /*momentum=*/0.9);
  
     // ── 训练 ──────────────────────────────────────────────
-    const int EPOCHS = 10;
+    const int EPOCHS = 100;
  
     std::cout << std::fixed << std::setprecision(6);    // 设置浮点数的输出格式
     std::cout << "epoch | loss\n";

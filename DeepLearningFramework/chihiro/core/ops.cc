@@ -225,3 +225,45 @@ TensorPtr ops::sum(const TensorPtr& a) {
 
     return Tensor::createFromOp({1}, {s}, fn);
 }
+
+/*
+============================================================
+    bce_with_logits_loss : 数值稳定的 BCE，接受 sigmoid 之前的 logits
+
+    forward 用 log-sum-exp trick 避免 log(0)：
+        L_i = max(x,0) - x*y + log(1 + e^{-|x|})
+    mean 规约到标量 {1}
+
+    使用时不需要提前调用 ops::sigmoid，直接传 fc 的输出
+============================================================
+*/
+TensorPtr ops::bceWithLogitsLoss(const TensorPtr& logits, const TensorPtr& target) {
+    assert(logits->shape() == target->shape());
+
+    size_t n = logits->size();
+
+    // forward：numerically stable BCE
+    std::vector<double> sig_val(n);
+    double loss_val = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        double x = logits->value()[i];
+        double y = target->value()[i];
+        // log(1 + e^{-|x|}) 不会下溢
+        loss_val += std::max(x, 0.0) - x * y + std::log(1 + std::exp(-std::abs(x)));
+        sig_val[i] = 1.0 / (1.0 + std::exp(-x));    // 反向需要
+    }
+
+    loss_val /= static_cast<double>(n);
+
+    if(!anyRequiresGrad({logits})) {
+        return Tensor::create({1}, {loss_val});
+    }
+
+    auto fn = std::make_shared<BCEWithLogitsBackward>();
+    fn->sigmoid_val_ = sig_val;
+    fn->target_val_ = target->value();
+    fn->n_ = n;
+    fn->saved_inputs_ = {logits};   // target 无梯度，不入图
+
+    return Tensor::createFromOp({1}, {loss_val}, fn);
+}

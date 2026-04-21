@@ -179,3 +179,27 @@ std::vector<std::vector<double>> SumBackward::apply(const std::vector<double>& g
 
     return {dx};
 }
+
+/*
+============================================================
+    BCEWithLogitsBackward
+    forward: loss = mean( max(x,0) - x*y + log(1 + e^{-|x|}) )
+    
+    ∂loss/∂x_i = (1/N) * (sigmoid(x_i) - y_i)
+    
+    保存的是 sigmoid(x)，反向直接 p - y，无除法，数值稳定
+============================================================
+*/
+std::vector<std::vector<double>> BCEWithLogitsBackward::apply(const std::vector<double>& grad) {
+    assert(grad.size() == 1);
+
+    double g = grad[0];
+    size_t n = sigmoid_val_.size();
+    std::vector<double> dx(n);
+
+    for (size_t i = 0; i < n; ++i) {
+        dx[i] = g * (sigmoid_val_[i] - target_val_[i]) / static_cast<double>(n);
+    }
+
+    return {dx};
+}

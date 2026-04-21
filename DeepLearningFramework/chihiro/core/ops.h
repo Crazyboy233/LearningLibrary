@@ -21,5 +21,6 @@ namespace ops {
     TensorPtr relu(const TensorPtr& a);
     TensorPtr sigmoid(const TensorPtr& a);
     TensorPtr sum(const TensorPtr& a);  // 全局求和 → 标量，用于构造 loss
+    TensorPtr bceWithLogitsLoss(const TensorPtr& logits, const TensorPtr& target);
 
 }   // namespace ops

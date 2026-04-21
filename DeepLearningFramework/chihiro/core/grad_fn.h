@@ -94,3 +94,13 @@ public:
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "SumBackward"; }
 };
+
+class BCEWithLogitsBackward : public GradFn {
+public:
+    std::vector<double> sigmoid_val_;   // 内部算好的 sigmoid(logits)，反向直接用
+    std::vector<double> target_val_;
+    size_t n_;
+
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "BCEWithLogitsBackward"; }
+};

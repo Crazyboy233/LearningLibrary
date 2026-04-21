@@ -9,9 +9,9 @@
     只要有一个输入 requires_grad，输出就需要记录计算图
 ============================================================
 */
-static bool anyRequiresGrad(const std::vector<const TensorPtr*>& inputs) {
-    for (auto* t : inputs) {
-        if((*t)->requireGrad()) {
+static bool anyRequiresGrad(const std::vector<TensorPtr>& inputs) {
+    for (auto& t : inputs) {
+        if((t)->requireGrad()) {
             return true;
         }
     }
@@ -41,7 +41,7 @@ TensorPtr ops::add(const TensorPtr& a, const TensorPtr& b) {
         }
     }
 
-    if(!anyRequiresGrad({&a, &b})) {
+    if(!anyRequiresGrad({a, b})) {
         return Tensor::create(shapeA, result);
     }
 
@@ -76,7 +76,7 @@ TensorPtr ops::sub(const TensorPtr& a, const TensorPtr& b) {
         }
     }
 
-    if(!anyRequiresGrad({&a, &b})) {
+    if(!anyRequiresGrad({a, b})) {
         return Tensor::create(shapeA, result);
     }
 
@@ -102,7 +102,7 @@ TensorPtr ops::mul(const TensorPtr& a, const TensorPtr& b) {
         result[i] = a->value()[i] * b->value()[i];
     }
 
-    if(!anyRequiresGrad({&a, &b})) {
+    if(!anyRequiresGrad({a, b})) {
         return Tensor::create(a->shape(), result);
     }
 
@@ -131,7 +131,7 @@ TensorPtr ops::matmul(const TensorPtr& a, const TensorPtr& b) {
 
     assert(k == b->rows());
 
-    std::vector<double> result(m * n);
+    std::vector<double> result(m * n, 0.0);
     for(size_t i = 0; i < m; ++i) {
         for (size_t p = 0; p < k; ++p) {
             for (size_t j = 0; j < n; ++j) {
@@ -140,7 +140,7 @@ TensorPtr ops::matmul(const TensorPtr& a, const TensorPtr& b) {
         }
     }
 
-    if (!anyRequiresGrad({&a, &b})) {
+    if (!anyRequiresGrad({a, b})) {
         return Tensor::create({m, n}, result);
     }
 
@@ -168,7 +168,7 @@ TensorPtr ops::relu(const TensorPtr& a) {
         result[i] = (a->value()[i] > 0.0) ? a->value()[i] : 0.0;
     }
 
-    if (!anyRequiresGrad({&a})) {
+    if (!anyRequiresGrad({a})) {
         return Tensor::create(a->shape(), result);
     }
 
@@ -193,7 +193,7 @@ TensorPtr ops::sigmoid(const TensorPtr& a) {
         result[i] = 1.0 / (1.0 + std::exp(-a->value()[i]));
     }
 
-    if(!anyRequiresGrad({&a})) {
+    if(!anyRequiresGrad({a})) {
         return Tensor::create(a->shape(), result);
     }
 
@@ -215,7 +215,7 @@ TensorPtr ops::sum(const TensorPtr& a) {
         s += v;
     }
 
-    if (!anyRequiresGrad({&a})) {
+    if (!anyRequiresGrad({a})) {
         return Tensor::create({1}, {s});
     }
 

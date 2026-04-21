@@ -7,7 +7,7 @@
 #include <cassert>
 
 // 编译命令
-// g++ -std=c++17 -O0 ./core/grad_fn.cc ./core/Tensor.cc ./core/ops.cc ./test/01_test_autograd.cpp && ./a.out
+// g++ -std=c++17 ./core/grad_fn.cc ./core/Tensor.cc ./core/ops.cc ./test/01_test_autograd.cpp && ./a.out
 
 
 // ============================================================

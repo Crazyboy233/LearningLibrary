@@ -28,8 +28,7 @@ public:
     virtual std::string name() const = 0;
 
     // 该 GradFn 依赖上游的 Tensor（即 forward 时的输入）
-    // 使用 weak_ptr 避免与 Tensor 之间循环引用
-    std::vector<std::weak_ptr<Tensor>> saved_inputs_;
+    std::vector<std::shared_ptr<Tensor>> saved_inputs_;
 };
 
 /*

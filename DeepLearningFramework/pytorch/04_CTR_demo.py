@@ -110,6 +110,10 @@ criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 for step, batch in enumerate(loader):
+    """
+        这里 label 就是 click 
+        也就是监督学习里的 真实答案
+    """
     user_id, item_id, gender, hour, label = batch
 
     label = label.float().unsqueeze(1)
@@ -129,7 +133,7 @@ for step, batch in enumerate(loader):
         这叫 logit（未过 sigmoid）。
     """
     logit = model(user_id, item_id, gender, hour)
-    
+
     loss = criterion(logit, label)
 
     optimizer.zero_grad()

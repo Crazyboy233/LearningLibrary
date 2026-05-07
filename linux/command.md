@@ -64,6 +64,49 @@ find . -size +100M
 find . -type f -size -10k
 ```
 
+### git-lfs
+```bash
+# 安装（macOS）
+brew install git-lfs
+
+# 安装（Ubuntu）
+sudo apt install git-lfs
+
+# 安装（Windows，用 Chocolatey）
+choco install git-lfs
+
+# 全局初始化（一次即可）
+git lfs install
+```
+**常用命令**
+```bash
+# 1. 追踪大文件类型（如 *.psd、*.zip、*.mp4）
+git lfs track "*.psd"
+git lfs track "assets/*.zip"   # 指定目录
+git lfs track "单个大文件.iso"
+
+# 2. 查看当前追踪规则
+git lfs track
+
+# 3. 把 .gitattributes 加入版本控制
+git add .gitattributes
+git commit -m "feat: 启用 LFS 追踪"
+
+# 4. 像普通文件一样 add/commit/push
+git add 大文件.psd
+git commit -m "add: 设计稿"
+git push
+
+# 5. 查看仓库里所有 LFS 管理的文件
+git lfs ls-files
+
+# 6. 手动拉取 LFS 文件（clone 后有时需要）
+git lfs pull
+
+# 7. 清理本地 LFS 缓存（节省空间）
+git lfs prune
+```
+
 ### grep
 **基本语法**
 ```bash

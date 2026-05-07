@@ -69,3 +69,27 @@ int main() {
     return 0;
 }
  
+/*
+训练流程：
+
+样本输入 x [4,2]
+    ↓
+fc1.forward(x)：线性变换 pred = x·W + b，shape [4,1]
+    ↓
+ops::sub(pred, target)：计算残差 diff = pred - target
+    ↓
+ops::mul(diff, diff)：逐元素平方 diff²
+    ↓
+ops::sum(diff²)：求和得标量 loss（MSE 无除N）
+    ↓
+loss->backward()：从 loss 出发做拓扑排序，
+                  反向链式求导，把梯度写入 W->grad(), b->grad()
+    ↓
+sgd.step()：W = W - lr × grad，更新权重
+    ↓
+sgd.zeroGrad()：清空所有梯度（为下一轮做准备）
+    ↓
+循环 100 个 epoch
+    ↓
+W 和 b 收敛到能让 pred ≈ target 的值
+*/

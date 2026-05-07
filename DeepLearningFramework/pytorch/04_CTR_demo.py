@@ -142,3 +142,30 @@ for step, batch in enumerate(loader):
 
     if step % 10 == 0:
         print(f"Step {step}, Loss {loss.item():.4f}")
+
+
+"""
+训练流程
+DataLoader 按 batch_size=64 切分数据集，每次取一批
+    ↓
+样本输入：user_id, item_id, gender, hour（各 shape [64]）
+    ↓
+Embedding 查表：每个 ID → 对应的稠密向量
+    （user_id→[64,16], item_id→[64,16], gender→[64,4], hour→[64,4]）
+    ↓
+torch.cat 拼接 → x shape [64, 40]
+    ↓
+MLP 前向：Linear(40→32) → ReLU → Linear(32→1)，输出 logit [64,1]
+    ↓
+BCEWithLogitsLoss：内部先 sigmoid(logit)，再和 label 算交叉熵，得标量 loss
+    ↓
+optimizer.zero_grad()：清空上一步残留梯度
+    ↓
+loss.backward()：反向传播，计算所有参数的梯度
+    ↓
+optimizer.step()：Adam 更新所有 W 和 b
+    ↓
+遍历完整个 DataLoader 算一个 epoch，继续下一个 batch
+    ↓
+多轮后模型学会：user_id % 10 == item_id % 10 时 click=1 的模式
+"""

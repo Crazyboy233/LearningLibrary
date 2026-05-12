@@ -104,3 +104,55 @@ public:
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "BCEWithLogitsBackward"; }
 };
+
+/*
+============================================================
+    EmbeddingBackward
+    forward : out[i] = W[ids[i]]          行索引查表
+    backward: dW[ids[i]] += grad[i, :]    梯度写回对应行
+ 
+    saved_inputs_ = {W}   （ids 是整数，不入计算图）
+ 
+    grad  : [batch * embedding_dim]，行主序展平
+    return: {dW}，shape [num_embeddings * embedding_dim]
+ 
+    关键细节：同一个 id 在 batch 里出现多次时，
+              对应行的梯度需要多次累加（+=），不能覆盖（=）
+============================================================
+*/
+class EmbeddingBackward : public GradFn {
+public:
+    std::vector<size_t> ids_;       // 前向时查了哪些行，shape [batch]
+    size_t num_embeddings_;
+    size_t embedding_dim_;
+
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "EmbeddingBackward"; }
+};
+
+/*
+============================================================
+    CatBackward
+    forward : out = cat([a, b, c, ...], dim=1)
+              沿列方向拼接，所有输入行数相同
+ 
+              inputs[0]: [m, n0]
+              inputs[1]: [m, n1]
+              ...
+              output   : [m, n0+n1+...]
+ 
+    backward: 把 grad [m, N] 按各输入的列宽切回去
+              d_inputs[i] = grad[:, offset_i : offset_i + n_i]
+ 
+    saved_inputs_ = {a, b, c, ...}   （顺序与 forward 一致）
+    col_widths_   = {n0, n1, ...}    （每个输入的列数，切片用）
+============================================================
+*/
+class CatBackward : public GradFn {
+public:
+    size_t rows_;    // batch size，即 m
+    std::vector<size_t> col_widths_;     // 每个输入的列数，顺序与 saved_inputs_ 一致
+
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "CatBackward"; }
+};

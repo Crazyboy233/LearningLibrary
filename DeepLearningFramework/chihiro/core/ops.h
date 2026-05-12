@@ -22,5 +22,6 @@ namespace ops {
     TensorPtr sigmoid(const TensorPtr& a);
     TensorPtr sum(const TensorPtr& a);  // 全局求和 → 标量，用于构造 loss
     TensorPtr bceWithLogitsLoss(const TensorPtr& logits, const TensorPtr& target);
-
+    // dim=1，沿列方向拼接，所有输入行数必须相同
+    TensorPtr cat(const std::vector<TensorPtr>& inputs);
 }   // namespace ops

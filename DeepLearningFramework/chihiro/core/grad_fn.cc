@@ -203,3 +203,83 @@ std::vector<std::vector<double>> BCEWithLogitsBackward::apply(const std::vector<
 
     return {dx};
 }
+
+/*
+============================================================
+    EmbeddingBackward
+    forward : out[i] = W[ids[i]]           行索引查表
+    backward: dW[ids[i]] += grad[i, :]     梯度写回对应行
+ 
+    grad 是输出 out 的梯度，shape [batch * embedding_dim]（展平）
+    dW   shape [num_embeddings * embedding_dim]，全零初始化后按 ids 散射累加
+ 
+    散射累加（scatter-add）示意：
+        for i in range(batch):
+            dW[ids[i], :] += grad[i, :]
+ 
+    注：同一 id 出现多次时 += 保证梯度正确累加，不能用赋值 =
+============================================================
+*/
+std::vector<std::vector<double>> EmbeddingBackward::apply(const std::vector<double>& grad) {
+    size_t batch = ids_.size();
+
+    assert(grad.size() == batch * embedding_dim_);
+
+    // dW 全零初始化，shape [num_embeddings * embedding_dim]
+    std::vector<double> dW(num_embeddings_ * embedding_dim_, 0.0);
+
+    // 散射累加：把 grad[i, :] 加到 dW[ids[i], :]
+    for (size_t i = 0; i < batch; ++i) {
+        size_t row = ids_[i];   // 对应 embedding 的行号
+        for (size_t j = 0; j < embedding_dim_; ++j) {
+            dW[row * embedding_dim_ + j] += grad[i * embedding_dim_ + j]; 
+        }
+    }
+
+    // saved_inputs_ = {W}，只返回一个梯度
+    return {dW};
+}
+
+/*
+============================================================
+    CatBackward
+    forward : out = cat([a, b, ...], dim=1)，沿列拼接
+    backward: 把 grad 按 col_widths_ 切片，分发给各输入
+ 
+    grad shape : [rows_, sum(col_widths_)]，行主序展平
+    每段输出   : [rows_, col_widths_[i]]，行主序展平
+ 
+    切片逻辑：
+        col_offset = 0
+        for i, w in enumerate(col_widths_):
+            for row in range(rows_):
+                d_inputs[i][row*w : row*w+w]
+                    = grad[row*N + col_offset : row*N + col_offset + w]
+            col_offset += w
+============================================================
+*/
+std::vector<std::vector<double>> CatBackward::apply(const std::vector<double>& grad) {
+    size_t N = 0;
+    for (auto w : col_widths_) {
+        N += w; // 总列数
+    }
+
+    assert(grad.size() == rows_ * N);
+
+    size_t n_inputs = col_widths_.size();
+    std::vector<std::vector<double>> d_inputs(n_inputs);
+
+    size_t col_offset = 0;
+    for (size_t i = 0; i < n_inputs; ++i) {
+        size_t w = col_widths_[i];
+        d_inputs[i].resize(rows_ * w);
+        for (size_t r = 0; r < rows_; ++r) {
+            for (size_t c = 0; c < w; ++c) {
+                d_inputs[i][r * w + c] = grad[r * N + col_offset + c];
+            }
+        }
+        col_offset += w;
+    }
+
+    return d_inputs;
+}

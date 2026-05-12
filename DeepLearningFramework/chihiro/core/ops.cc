@@ -267,3 +267,53 @@ TensorPtr ops::bceWithLogitsLoss(const TensorPtr& logits, const TensorPtr& targe
 
     return Tensor::createFromOp({1}, {loss_val}, fn);
 }
+
+/*
+============================================================
+    cat : 沿 dim=1（列方向）拼接任意数量的 2D Tensor
+          inputs[0]: [m, n0]
+          inputs[1]: [m, n1]
+          ...
+          output   : [m, n0+n1+...]
+============================================================
+*/
+TensorPtr ops::cat(const std::vector<TensorPtr>& inputs) {
+    assert(!inputs.empty());
+
+    size_t m = inputs[0]->rows();
+    size_t N = 0;
+    std::vector<size_t> col_widths;
+    
+    for (auto& t : inputs) {
+        assert(t->rows() == m);
+        assert(t->ndim() == 2);
+
+        col_widths.push_back(t->cols());
+        N += t->cols();
+    }
+
+    // ---- forward：按行逐段拼 ----
+    std::vector<double> result(m * N);
+    for (size_t r = 0; r < m; ++r) {
+        size_t col_offset = 0;
+        for (size_t i = 0; i < inputs.size(); ++i) {
+            size_t w = col_widths[i];
+            const auto& val = inputs[i]->value();
+            for (size_t c = 0; c < w; ++c) {
+                result[r * N + col_offset + c] = val[r * w + c];
+            }
+            col_offset += w;
+        }
+    }
+
+    if (!anyRequiresGrad(inputs)) {
+        return Tensor::create({m, N}, result);
+    }
+
+    auto fn = std::make_shared<CatBackward>();
+    fn->rows_ = m;
+    fn->col_widths_ = col_widths;
+    fn->saved_inputs_ = inputs; // 保存所有输入，backward 按顺序分发梯度
+
+    return Tensor::createFromOp({m, N}, result, fn);
+}

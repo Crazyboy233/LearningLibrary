@@ -2,6 +2,7 @@
 my_venv/
 tf-env/
 torch-env/
+chihiro_env/
 .vscode/
 build/
 a.out

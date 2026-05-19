@@ -33,21 +33,50 @@ void test_recommendation() {
     SGD sgd(params, LR, /*momentum=*/0.9);
 
     // 固定 batch：4 条样本，label=1 表示用户-商品有正向交互
-    std::vector<double> user_ids = {0, 2, 5, 7};
-    std::vector<double> item_ids = {3, 1, 8, 5};
+    std::vector<size_t> user_ids = {0, 2, 5, 7};
+    std::vector<size_t> item_ids = {3, 1, 8, 5};
     // target: [4, 1]
     auto target = Tensor::create({4, 1}, {1.0, 1.0, 0.0, 1.0});
-
-    double first_loss = -1.0;
-    double last_loss = -1.0;
 
     // 训练
     for (size_t epoch = 0; epoch < EPOCHS; ++epoch) {
         sgd.zeroGrad();
 
         // forward
+        auto u_emb = user_emb.forward(user_ids);
+        auto i_emb = item_emb.forward(item_ids);
+        auto concat = ops::cat({u_emb, i_emb});
+        auto h = ops::relu(fc.forward(concat));
+        auto logits = out_layer.forward(h);
 
+        auto loss = ops::bceWithLogitsLoss(logits, target);
+
+        loss->backward();
+
+        // 打印：
+        if (epoch % 10 == 0) {
+            std::cout << "================================" << std::endl;
+            std::cout << "epoch = " << epoch << std::endl;
+            std::cout << "loss: " << "[";
+            for (auto v : loss->value()) {
+                std::cout << v << ", ";
+            }
+            std::cout << "]" << std::endl;;
+            
+            std::cout << "sigmoid(logits): " << "[";
+            auto prob = ops::sigmoid(logits);
+            for (auto v : prob->value()) {
+                std::cout << v << ", ";
+            }
+            std::cout << "]" << std::endl;
+            std::cout << "================================" << std::endl;
+
+        }
+        // end 打印
+
+        sgd.step();
     }
+
 }
 
 int main() {

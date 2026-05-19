@@ -1,7 +1,7 @@
 #include "embeddings.h"
 #include <random>
 
-Embedding::Embedding(size_t num_embeddings, size_t embedding_dim, unsigned seed = 42) 
+Embedding::Embedding(size_t num_embeddings, size_t embedding_dim, unsigned seed) 
     :num_embeddings_(num_embeddings), embedding_dim_(embedding_dim)
 {
     // ---- 随机引擎 ----

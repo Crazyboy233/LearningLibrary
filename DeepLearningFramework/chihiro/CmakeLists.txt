@@ -26,17 +26,17 @@ set(CORE_SOURCES
     ${PROJECT_CORE_DIR}/optimizer.cc
 )
 
-pybind11_add_module(chihiro
+pybind11_add_module(core
     ${CMAKE_SOURCE_DIR}/interface/pybind.cc
     ${CORE_SOURCES}
 )
 
-target_include_directories(chihiro PRIVATE
+target_include_directories(core PRIVATE
     ${PROJECT_CORE_DIR}
 )
 
 # Force-include the shim before every TU so missing std headers are resolved
-target_compile_options(chihiro PRIVATE
+target_compile_options(core PRIVATE
     -O2
     -Wall -Wextra -Wno-unused-parameter
 )

@@ -1,0 +1,42 @@
+cmake_minimum_required(VERSION 3.15)
+project(chihiro LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(pybind11 CONFIG QUIET)
+if(NOT pybind11_FOUND)
+    execute_process(
+        COMMAND python3 -c "import pybind11; print(pybind11.get_cmake_dir())"
+        OUTPUT_VARIABLE PYBIND11_CMAKE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_CMAKE_DIR}")
+    find_package(pybind11 REQUIRED)
+endif()
+
+set(PROJECT_CORE_DIR ${CMAKE_SOURCE_DIR}/core)
+message(${CMAKE_SOURCE_DIR})   
+
+set(CORE_SOURCES
+    ${PROJECT_CORE_DIR}/Tensor.cc
+    ${PROJECT_CORE_DIR}/grad_fn.cc
+    ${PROJECT_CORE_DIR}/ops.cc
+    ${PROJECT_CORE_DIR}/linear.cc
+    ${PROJECT_CORE_DIR}/embeddings.cc
+    ${PROJECT_CORE_DIR}/optimizer.cc
+)
+
+pybind11_add_module(chihiro
+    ${CMAKE_SOURCE_DIR}/interface/pybind.cc
+    ${CORE_SOURCES}
+)
+
+target_include_directories(chihiro PRIVATE
+    ${PROJECT_CORE_DIR}
+)
+
+# Force-include the shim before every TU so missing std headers are resolved
+target_compile_options(chihiro PRIVATE
+    -O2
+    -Wall -Wextra -Wno-unused-parameter
+)

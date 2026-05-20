@@ -14,12 +14,29 @@
 - ✅ SGD 参数更新
 - ✅ 多节点链式计算
 - ✅ boardcast
+- ✅ python 前段接口
 
 ---
 # 🚀 Quick Start
 ```c++
-// 目前版本参考 test/02_test_xor.cpp
-// 综合测试参考 test/02_test_xor.cpp
+// 目前版本参考 test/06_test_embedding_cat.cpp
+// 综合测试参考 test/06_test_embedding_cat.cpp
+
+/* 
+    python 前端综合测试 test/07_torchlike.py
+    执行测试命令如下：
+        cd DeepLearningFramework/chihiro
+        mkdir -p build
+        cd build
+        cmake ..
+        make
+        cd ..
+        python test/07_torchlike.py
+    注意：
+        保证你的python环境具有 pybind11。 
+    依赖安装（Ubuntu/Debian）：
+        pip install pybind11
+*/
 ```
 # 工作流程
 ## 1. Computation Graph（计算图）
@@ -87,11 +104,18 @@ namespace ops {
 - relu
 - sigmoid
 - sum
+- bceWithLogitsLoss
+- cat
 
 ## Optimizer
 参数更新模块：
 - 当前实现：SGD
 - 管理 Parameter 列表
+
+## Model
+目前支持：
+- Linear
+- Embedding
 
 ---
 
@@ -127,7 +151,6 @@ namespace ops {
 ---
 # 当前限制
 当前版本是最小实现，存在一些限制：
-- ❌ 不支持 batch
 - ❌ 不支持多输出 Node
 - ❌ 无 requires_grad 控制
 - ❌ 无内存优化
@@ -137,7 +160,6 @@ namespace ops {
 # Roadmap
 未来计划：
 - 实现 Adam / Momentum
-- C++ / Python 前端接口
 
 ---
 # 静态图 & 动态图

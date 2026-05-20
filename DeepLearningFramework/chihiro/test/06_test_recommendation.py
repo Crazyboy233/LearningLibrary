@@ -56,7 +56,7 @@ def test_recommendation():
             prob = ops.sigmoid(logits)
             print("================================")
             print(f"epoch = {epoch}")
-            print(f"loss:            {loss}")
+            print(f"loss:            {loss.data}")
             print(f"sigmoid(logits): {[round(v, 4) for v in prob.data]}")
             print(f"target:          {target.data}")
             print("================================")

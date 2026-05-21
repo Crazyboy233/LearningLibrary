@@ -15,8 +15,8 @@ Tensor::backward()
 ============================================================
 */
 void Tensor::backward() {
-    if (size() != 1) {
-        throw std::runtime_error("backward() 只能从标量调用，请先用 ops::sum() 规约");
+    if (numel() != 1) {
+        throw std::runtime_error("backward() 只能从标量调用，请先用 ops::sum() 归约");
     }
 
     // loss 的初始梯度为 1.0

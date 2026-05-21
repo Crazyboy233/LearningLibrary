@@ -26,6 +26,104 @@ private:
     static inline bool enabled_  = true;
 };
 
+/*
+==============================================================
+    Shape 工具函数（全局，供 ops / grad_fn 共用）
+==============================================================
+*/
+
+// 返回 Tensor 中元素的总个数
+inline size_t shapeNumel(const std::vector<size_t>& shape) {
+    if (shape.empty()) return 0;
+    
+    size_t n = 1;
+    for (auto d : shape) {
+        n *= d;
+    }
+    return n;
+}
+
+// 行主序 strides：strides[i] = product(shape[i+1..end])
+// 维度到内存地址的换算
+inline std::vector<size_t> shapeStrides(const std::vector<size_t>& shape) {
+    size_t ndim = shape.size();
+    std::vector<size_t> st(ndim, 1);
+    for(int i = (int)ndim - 2; i >= 0; --i) {
+        st[i] = st[i + 1] * shape[i + 1];
+    }
+    return st;
+}
+
+/*
+    broadcast_shape：末尾对齐，每维取 max
+    [2,1,4] 和 [3,4] → [2,3,4]
+*/
+inline std::vector<size_t> broadcastShape(const std::vector<size_t>& a, const std::vector<size_t>& b) {
+    size_t ndim = std::max(a.size(), b.size());
+    std::vector<size_t> out(ndim);
+
+    for (size_t i = 0; i < ndim; ++i) {
+        int ia = (int)a.size() - 1 - (int)i;
+        int ib = (int)b.size() - 1 - (int)i;
+        size_t da = (ia >= 0) ? a[ia] : 1;
+        size_t db = (ib >= 0) ? b[ib] : 1;
+        if (da != db && da != 1 && db != 1) {
+            throw std::runtime_error("broadcastShape: incompatible dims");
+        }
+        out[ndim - 1 - i] = std::max(da, db);
+    }
+    return out;
+}
+
+/*
+    reduceTo：将 grad（大 shape）reduce 回 target_shape（小 shape）
+    broadcast 反向时，凡被扩展的维度都要 sum 折叠
+    实现参考：../doc/function.md
+*/
+inline std::vector<double> reduceTo(const std::vector<double>& grad,
+                                    const std::vector<size_t>& grad_shape,
+                                    const std::vector<size_t>& target_shape) {
+    size_t ndim = grad_shape.size();
+    // target 左补 1 对齐
+    std::vector<size_t> ts(ndim, 1);
+    size_t offset = ndim - target_shape.size();
+    for (size_t i = 0; i < target_shape.size(); ++i) {
+        ts[offset + i] = target_shape[i];
+    }
+
+    size_t total = shapeNumel(grad_shape);
+    size_t out_total = shapeNumel(ts);
+    auto out_st = shapeStrides(ts);
+
+    std::vector<double> result(out_total, 0.0);
+    std::vector<size_t> idx(ndim);
+
+    for (size_t flat = 0; flat < total; ++flat) {
+        // 把展平的索引 → 还原成多维坐标
+        size_t tmp = flat;
+        for (int d = (int)ndim - 1; d >= 0; --d) {
+            idx[d] = tmp % grad_shape[d];
+            tmp /=  grad_shape[d];
+        }
+        // 广播处理：把多维坐标 → 映射到目标形状的索引
+        size_t res_flat = 0;
+        for (size_t d = 0; d < ndim; ++d) {
+            size_t i = (ts[d] == 1) ? 0 : idx[d];
+            res_flat += i * out_st[d];
+        }
+        result[res_flat] += grad[flat];
+    }
+    return result;
+}
+ 
+// 支持负维度索引
+inline int normalizeDim(int dim, int ndim) {
+    if (dim < 0) dim += ndim;
+    if (dim < 0 || dim >= ndim)
+        throw std::out_of_range("dim out of range");
+    return dim;
+}
+
 
 /*
 ==============================================================
@@ -67,12 +165,24 @@ public:
     const std::vector<size_t>& shape() const { return shape_; }
     const std::vector<double>& value() const { return value_; }
     size_t ndim() const { return shape_.size(); }
-    size_t size() const { return value_.size(); }
-    size_t rows() const { assert(shape_.size() == 2); return shape_[0]; }
-    size_t cols() const { assert(shape_.size() == 2); return shape_[1]; }
+    size_t numel() const { return value_.size(); }
+    size_t size() const { return numel(); } // 兼容旧接口
     
+    // 取最后两维（matmul 等使用）
+    size_t rows() const { 
+        assert(shape_.size() >= 2); 
+        return shape_[shape_.size() - 2]; 
+    }
+
+    size_t cols() const { 
+        assert(!shape_.empty());
+        return shape_.back();
+    }
+    
+    std::vector<size_t> strides() const { return shapeStrides(shape_); }
+
     // --------------- 梯度 ---------------
-    const std::vector<double> grad() const { return grad_; }
+    const std::vector<double>& grad() const { return grad_; }
     bool requireGrad() const { return requires_grad_; }
 
     void zeroGrad() {

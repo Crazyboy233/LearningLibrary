@@ -39,7 +39,7 @@ public:
 
 class AddBackward : public GradFn {
 public:
-    std::vector<size_t> shapeA_, shapeB_;   // 处理 broadcast
+    std::vector<size_t> shapeA_, shapeB_, shapeOut_;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "AddBackward"; }
@@ -47,7 +47,7 @@ public:
 
 class SubBackward : public GradFn {
 public:
-    std::vector<size_t> shapeA_, shapeB_;
+    std::vector<size_t> shapeA_, shapeB_, shapeOut_;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "SubBackward"; }
@@ -56,16 +56,22 @@ public:
 class MulBackward : public GradFn {
 public:
     std::vector<double> x_val_, y_val_;
+    std::vector<size_t> shapeA_, shapeB_, shapeOut_;
     bool same_tensor_ = false;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "MulBackward"; }
 };
 
+/*
+    A: [..., m, k]   B: [..., k, n]   C: [..., m, n]
+    batch 维度做 broadcast
+*/
 class MatMulBackward : public GradFn {
 public:
     std::vector<double> A_val_, B_val_;
-    size_t m_, k_, n_;
+    std::vector<size_t> shapeA_, shapeB_;   // 原始shape，含batch
+    size_t m_, k_, n_;                      // 最后两维
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "MatMulBackward"; }
@@ -87,18 +93,27 @@ public:
     std::string name() const override { return "SigmoidBackward"; }
 };
 
+// -------- Reduce --------
+/*
+    SumBackward 支持两种模式：
+      全局 sum：sum_dim_ = -1（旧接口）
+      沿 dim   ：sum_dim_ >= 0，keepdim_ 记录是否保留维度
+*/
 class SumBackward : public GradFn {
 public:
-    size_t input_size_;
+    std::vector<size_t> input_shape_;
+    int sum_dim_ = -1;  // -1 表示全局 sum
+    bool keepdim_ = false;
+    // size_t input_size_;
     
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "SumBackward"; }
 };
 
+// -------- Loss --------
 class BCEWithLogitsBackward : public GradFn {
 public:
-    std::vector<double> sigmoid_val_;   // 内部算好的 sigmoid(logits)，反向直接用
-    std::vector<double> target_val_;
+    std::vector<double> sigmoid_val_, target_val_;   // 内部算好的 sigmoid(logits)，反向直接用
     size_t n_;
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
@@ -150,9 +165,71 @@ public:
 */
 class CatBackward : public GradFn {
 public:
-    size_t rows_;    // batch size，即 m
-    std::vector<size_t> col_widths_;     // 每个输入的列数，顺序与 saved_inputs_ 一致
+    std::vector<size_t> out_shape_;
+    int cat_dim_;                       // 拼接维度（已规范化，非负）
+    std::vector<size_t> split_sizes_;    // 每个输入在 cat_dim_ 上的大小
 
     std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
     std::string name() const override { return "CatBackward"; }
 };
+
+// -------- Transpose（交换任意两维）--------
+class TransposeBackward : public GradFn {
+public:
+    std::vector<size_t> in_shape_;
+    int dim0_, dim1_;
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "TransposeBackward"; }
+};
+ 
+// -------- Reshape --------
+class ReshapeBackward : public GradFn {
+public:
+    // 梯度只需 reshape 回原 shape，shape 存在 saved_inputs_[0] 上
+    // 这里直接记原 shape
+    std::vector<size_t> in_shape_;
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "ReshapeBackward"; }
+};
+ 
+// -------- Softmax --------
+class SoftmaxBackward : public GradFn {
+public:
+    std::vector<double> y_val_;         // softmax 输出
+    std::vector<size_t> shape_;
+    int dim_;
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "SoftmaxBackward"; }
+};
+ 
+// -------- LayerNorm --------
+/*
+    forward: y = (x - mean) / sqrt(var + eps) * w + b
+    saved_inputs_ = {x, w, b}
+    额外保存: x_norm（归一化后，乘 w 之前）、var + eps 的倒数根
+*/
+class LayerNormBackward : public GradFn {
+public:
+    std::vector<double> x_val_, x_norm_, w_val_;
+    std::vector<double> rstd_;          // 1/sqrt(var+eps)，每个归一化组一个值
+    std::vector<size_t> shape_;         // input shape
+    size_t norm_size_;                  // 归一化的最后一维大小（== embedding_dim）
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "LayerNormBackward"; }
+};
+ 
+// -------- CrossEntropyLoss --------
+/*
+    input : [N, C]  logits
+    target: [N]     class indices (size_t)
+    loss  : scalar
+*/
+class CrossEntropyBackward : public GradFn {
+public:
+    std::vector<double> softmax_val_;   // [N*C] softmax(logits)
+    std::vector<size_t> target_;        // [N]  class indices
+    size_t N_, C_;
+    std::vector<std::vector<double>> apply(const std::vector<double>& grad) override;
+    std::string name() const override { return "CrossEntropyBackward"; }
+};
+ 

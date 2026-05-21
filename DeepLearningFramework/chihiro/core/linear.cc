@@ -32,8 +32,8 @@ Linear::Linear(size_t in_features, size_t out_features, unsigned seed)
 }
 
 TensorPtr Linear::forward(const TensorPtr& x) {
-    // y = x @ w + b
-    // x: [batch, in]  W: [in, out]  b: [1, out]  →  y: [batch, out]
+    // y = x @ W + b
+    // x: [..., in]  W: [in, out]  b: [1, out]  → y: [..., out]
     auto xW = ops::matmul(x, W_);
     return ops::add(xW, b_);
 }

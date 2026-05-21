@@ -15,12 +15,14 @@
 - ✅ 多节点链式计算
 - ✅ boardcast
 - ✅ python 前段接口
+- ✅ 支持多维
+- ✅ 支持 transformer
 
 ---
 # 🚀 Quick Start
 ```c++
-// 目前版本参考 test/06_test_embedding_cat.cpp
-// 综合测试参考 test/06_test_embedding_cat.cpp
+// 目前版本参考 test/08_test_N_dim.cpp
+// 综合测试参考 test/08_test_N_dim.cpp
 
 /* 
     python 前端综合测试 test/07_torchlike.py
@@ -106,6 +108,11 @@ namespace ops {
 - sum
 - bceWithLogitsLoss
 - cat
+- crossEntropyLoss
+- transpose
+- reshape
+- softmax
+- layerNorm
 
 ## Optimizer
 参数更新模块：
@@ -149,17 +156,6 @@ namespace ops {
 👉 明确优化目标
 
 ---
-# 当前限制
-当前版本是最小实现，存在一些限制：
-- ❌ 不支持多输出 Node
-- ❌ 无 requires_grad 控制
-- ❌ 无内存优化
-- ❌ 无动态图机制
-
----
-# Roadmap
-未来计划：
-- 实现 Adam / Momentum
 
 ---
 # 静态图 & 动态图

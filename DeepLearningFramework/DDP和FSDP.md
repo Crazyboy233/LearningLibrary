@@ -1,7 +1,7 @@
 DDP 和 FSDP 都是数据并行。一个是算的快，一个是活的下去。
 
 ---
-**DDP**
+## DDP
 DDP(Distributed Data Parallel): 每张卡一份完整模型，一份参数，一份梯度。
 
 流程：
@@ -21,9 +21,10 @@ DDP(Distributed Data Parallel): 每张卡一份完整模型，一份参数，一
 模型大了直接G。
 
 ---
-**FSDP**
+## FSDP
 FSDP(Fully Sharded Data Parallel): 参数，梯度，优化器状态，统统分片(shard)到各张卡上。
 也就是说：
+
 - 单卡 不再拥有完整模型
 - 每张卡只存自己那一小片参数
 - 真正用到某层时，临时把参数 **AllGather** 过来
@@ -35,8 +36,9 @@ FSDP(Fully Sharded Data Parallel): 参数，梯度，优化器状态，统统分
 - Debug 难度高。
 
 ---
-**ZeRO系列** 
+## ZeRO系列
 ZeRO（Zero Redundancy Optimizer）是 Deepspeed 的核心创新，通过分片存储模型状态，消除显存冗余，分 3 个阶段，显存优化逐级增强：
+
 1. ZeRO-1：优化器状态分片
     - 分片对象：优化器状态（如 Adam 的 m、v）
     - 显存节省：约 40%

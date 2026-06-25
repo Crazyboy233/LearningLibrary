@@ -240,11 +240,11 @@ void test_transformer_encoder() {
     section("TEST 6: Mini Transformer Encoder (单头自注意力 + FFN)");
 
     // 超参
-    const size_t VOCAB   = 16;
-    const size_t D_MODEL = 8;
-    const size_t D_K     = 8;    // 单头，d_k = d_model
-    const size_t D_FF    = 16;   // FFN 中间维
-    const size_t SEQ     = 4;    // 序列长度
+    const size_t VOCAB   = 16;  // 词表大小
+    const size_t D_MODEL = 8;   // embedding 维度
+    const size_t D_K     = 8;   // 单头，d_k = d_model， Q K V 维度
+    const size_t D_FF    = 16;  // FFN 中间维
+    const size_t SEQ     = 4;   // 序列长度
     const double LR      = 0.02;
     const size_t EPOCHS  = 200;
 
@@ -302,9 +302,9 @@ void test_transformer_encoder() {
         auto x = tok_emb.forward(src_ids);   // [4, 8]
 
         // ---- Self-Attention ----
-        auto Q = Wq.forward(x);   // [4, 8]
-        auto K = Wk.forward(x);
-        auto V = Wv.forward(x);
+        auto Q = Wq.forward(x);     // [4, 8]
+        auto K = Wk.forward(x);     // [4, 8]
+        auto V = Wv.forward(x);     // [4, 8]
 
         // scores = Q @ K^T / sqrt(d_k)  → [4, 4]
         auto Kt     = ops::transpose(K, 0, 1);          // [8, 4]

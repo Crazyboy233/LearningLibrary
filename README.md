@@ -28,11 +28,9 @@
 │   │   │   └── pybind.cc
 │   │   ├── README.md
 │   │   └── test
-│   ├── DDP和FSDP.md
 │   ├── pytorch
 │   │   ├── 01_train.py
 │   │   ├── 02_train.py
-│   │   ├── 03_my_autograd.py
 │   │   ├── 04_CTR_demo.py
 │   │   ├── 05_wide_deep.py
 │   │   ├── data
@@ -43,7 +41,6 @@
 │   │       ├── 01_train.py
 │   │       └── sample.py
 │   ├── Transformer.md
-│   ├── transformer.png
 │   ├── 名词解释.md
 │   └── 训练流程图.md
 ├── env
@@ -60,7 +57,6 @@
 ├── python
 │   ├── 01_内置函数介绍.py
 │   └── 02_容器及方法介绍.py
-├── README.md
 ├── 各种三方库.md
 └── 剑指offer
 ```

@@ -4,5 +4,6 @@ tf-env/
 torch-env/
 chihiro_env/
 .vscode/
+.workbuddy/
 build/
 a.out

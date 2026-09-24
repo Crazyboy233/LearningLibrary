@@ -1,0 +1,9 @@
+# 本地环境（不入库）
+.venv/
+node_modules/
+
+# 系统文件
+.DS_Store
+
+# 注意：assets/js/content.js 与 assets/img/ 是构建产物，但部署时服务器上没有 Python，
+# 所以必须入库，不能忽略。

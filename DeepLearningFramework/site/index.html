@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>深度学习框架学习手册</title>
+<meta name="description" content="深度学习框架、核心术语、训练流程与 Transformer 论文的学习笔记，支持全文搜索与深浅色主题。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Ctext x='16' y='22' font-family='-apple-system,BlinkMacSystemFont,sans-serif' font-size='14' font-weight='700' fill='%23fff' text-anchor='middle'%3EDL%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<script>
+  // 提前落主题与面板宽度，避免首屏跳动
+  (function () {
+    var root = document.documentElement;
+    try {
+      var q = new URLSearchParams(location.search).get('theme');
+      var t = (q === 'light' || q === 'dark') ? q : localStorage.getItem('dlf-theme');
+      if (t !== 'light' && t !== 'dark') {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      root.setAttribute('data-theme', t);
+    } catch (e) {
+      root.setAttribute('data-theme', 'light');
+    }
+
+    // 侧栏 / 目录宽度（可拖拽，存本地）
+    var MIN_MAIN = 660;
+    function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+    var side = 266, toc = 250;
+    try {
+      var s = parseFloat(localStorage.getItem('dlf-side-w'));
+      var c = parseFloat(localStorage.getItem('dlf-toc-w'));
+      if (s && !isNaN(s)) { side = clamp(s, 200, 460); root.style.setProperty('--side-w', side + 'px'); }
+      if (c && !isNaN(c)) { toc = clamp(c, 170, 420); root.style.setProperty('--toc-w', toc + 'px'); }
+      if (localStorage.getItem('dlf-nav-collapsed') === '1') root.classList.add('nav-collapsed');
+    } catch (e) { /* ignore */ }
+
+    function computeFit() {
+      var collapsed = root.classList.contains('nav-collapsed');
+      var usable = window.innerWidth - (collapsed ? 0 : side) - toc;
+      root.classList.toggle('toc-inline', usable >= MIN_MAIN);
+    }
+    computeFit();
+
+    // 供 app.js 复用
+    window.__fitLayout = function () {
+      try {
+        var cs = getComputedStyle(root);
+        var sv = parseFloat(cs.getPropertyValue('--side-w'));
+        var tv = parseFloat(cs.getPropertyValue('--toc-w'));
+        if (!isNaN(sv)) side = sv;
+        if (!isNaN(tv)) toc = tv;
+      } catch (e) { /* ignore */ }
+      computeFit();
+    };
+    window.__clampPanel = clamp;
+    window.__minMain = MIN_MAIN;
+  })();
+</script>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<header class="topbar">
+  <button class="icon-btn" id="menuBtn" type="button" aria-label="折叠或展开左侧导航" title="折叠 / 展开左侧导航">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
+
+  <a class="brand" href="#/" id="brand">
+    <span class="brand-mark">DL</span>
+    <span class="brand-text">
+      <strong>深度学习框架</strong>
+      <small>学习手册</small>
+    </span>
+  </a>
+
+  <div class="search" id="search">
+    <svg class="search-ico" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M20 20l-3.6-3.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <input id="searchInput" type="text" placeholder="搜索术语、章节、公式…" autocomplete="off"
+           autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="全文搜索">
+    <button class="search-clear" id="searchClear" type="button" aria-label="清空" hidden>✕</button>
+    <kbd class="search-kbd" id="searchKbd">⌘K</kbd>
+    <div class="search-pop" id="searchPop" hidden>
+      <div class="search-head" id="searchHead"></div>
+      <div class="search-list" id="searchList" role="listbox"></div>
+      <div class="search-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+        <span><kbd>↵</kbd> 跳转</span>
+        <span><kbd>esc</kbd> 关闭</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="icon-btn" id="tocBtn" type="button" aria-label="本页目录" title="本页目录" hidden>
+    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <path d="M4 6h9M4 12h9M4 18h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="18" cy="6" r="1.5" fill="currentColor"/>
+      <circle cx="18" cy="12" r="1.5" fill="currentColor"/>
+      <circle cx="18" cy="18" r="1.5" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <button class="icon-btn" id="themeBtn" type="button" aria-label="切换深浅色主题" title="切换主题">
+    <svg class="ico-sun" viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2" fill="currentColor"/>
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/>
+      </g>
+    </svg>
+    <svg class="ico-moon" viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <path d="M20 14.6A8.4 8.4 0 019.4 4a8.6 8.6 0 108.9 11.4 8.5 8.5 0 001.7-.8z" fill="currentColor"/>
+    </svg>
+  </button>
+</header>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-scroll">
+      <nav class="nav" id="nav"></nav>
+    </div>
+    <div class="side-foot">
+      <span id="sideMeta"></span>
+    </div>
+    <div class="resizer resizer-side" id="sideResizer" title="拖动调整宽度 · 双击复位"></div>
+  </aside>
+  <div class="mask" id="mask" hidden></div>
+
+  <main class="main" id="main">
+    <div class="wrap" id="content"></div>
+    <footer class="foot" id="foot"></footer>
+  </main>
+
+  <aside class="toc" id="tocAside">
+    <div class="resizer resizer-toc" id="tocResizer" title="拖动调整宽度 · 双击复位"></div>
+    <div class="toc-inner">
+      <div class="toc-head">
+        <span>本页目录</span>
+        <span class="toc-actions">
+          <button class="toc-all" id="tocAll" type="button">展开</button>
+          <button class="toc-close" id="tocClose" type="button" aria-label="关闭目录">✕</button>
+        </span>
+      </div>
+      <nav class="toc-nav" id="tocNav"></nav>
+    </div>
+  </aside>
+</div>
+
+<button class="to-top" id="toTop" type="button" aria-label="回到顶部" hidden>
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lb-bar">
+    <button class="lb-btn" type="button" data-act="out" aria-label="缩小">−</button>
+    <span class="lb-scale" id="lbScale">100%</span>
+    <button class="lb-btn" type="button" data-act="in" aria-label="放大">+</button>
+    <span class="lb-sep"></span>
+    <button class="lb-btn lb-text" type="button" data-act="fit">适应屏幕</button>
+    <button class="lb-btn lb-text" type="button" data-act="one">1:1</button>
+    <span class="lb-hint">滚轮 / 捏合缩放 · 拖动平移 · 双击切换</span>
+    <button class="lb-btn lb-close" type="button" data-act="close" aria-label="关闭">✕</button>
+  </div>
+  <div class="lb-viewport" id="lbViewport">
+    <div class="lb-stage" id="lbStage"></div>
+  </div>
+</div>
+
+<script src="assets/js/content.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

@@ -557,16 +557,36 @@
   }
 
   /* ------------------------------------------------------------- 搜索 */
-  var INDEX = DATA.index.map(function (e) {
-    var p = PAGES[e.p];
-    return {
-      p: e.p, a: e.a, h: e.h, x: e.x,
-      lx: e.x.toLowerCase(),
-      lh: (e.h || '').toLowerCase(),
-      lt: ((p ? p.title : '') + ' ' + (p ? p.badge : '')).toLowerCase(),
-      pt: p ? p.title : e.p
-    };
-  });
+
+  /**
+   * 索引按「页面 + 锚点」合并后再用于检索。
+   *
+   * 构建期是逐段落切片的，同一章节会拆成多条片段（如「过拟合和欠拟合」一节
+   * 被拆成 26 条），但它们的跳转锚点是同一个，直接罗列就会出现好几条
+   * 「点了跳到同一处」的结果。这里把同锚点的片段按原文顺序拼回一条，
+   * 让「一条结果 = 一个落点」，段落顺序即章节内的行文顺序。
+   */
+  var INDEX = (function () {
+    var groups = {};
+    var merged = [];
+    DATA.index.forEach(function (e) {
+      var key = e.p + '\u0000' + e.a;
+      var g = groups[key];
+      if (g) { g.x += ' ' + e.x; return; }
+      groups[key] = g = { p: e.p, a: e.a, h: e.h, x: e.x };
+      merged.push(g);
+    });
+    return merged.map(function (e) {
+      var p = PAGES[e.p];
+      return {
+        p: e.p, a: e.a, h: e.h, x: e.x,
+        lx: e.x.toLowerCase(),
+        lh: (e.h || '').toLowerCase(),
+        lt: ((p ? p.title : '') + ' ' + (p ? p.badge : '')).toLowerCase(),
+        pt: p ? p.title : e.p
+      };
+    });
+  })();
 
   var sel = -1;
   var results = [];
@@ -646,7 +666,9 @@
       var e = INDEX[i];
       var s = scoreEntry(e, terms, mode);
       if (s < 0) continue;
-      if (terms.length === 1 && e.x.length <= terms[0].length + 2) s += 25;
+      // 「整段文字就是这个关键词」的短词条（多为术语），以及标题路径恰好等于关键词时加权。
+      // 合并后片段已拼成章节，故同时用标题判断，保留原有的词条优先效果。
+      if (terms.length === 1 && (e.lh === terms[0] || e.x.length <= terms[0].length + 2)) s += 25;
       out.push({ e: e, s: s });
     }
     out.sort(function (a, b) { return b.s - a.s || a.e.x.length - b.e.x.length; });

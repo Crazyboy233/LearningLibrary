@@ -190,6 +190,9 @@ html[data-theme="dark"] .topbar { background: rgba(14, 16, 20, .86); }
 .icon-btn:hover { background: var(--bg-inset); color: var(--text); }
 .icon-btn:active { transform: scale(.95); }
 
+/* 顶栏右侧按钮组：无论显示几个按钮，始终只占一列 */
+.tb-actions { display: flex; align-items: center; gap: 4px; }
+
 #themeBtn .ico-moon { display: none; }
 html[data-theme="dark"] #themeBtn .ico-sun { display: none; }
 html[data-theme="dark"] #themeBtn .ico-moon { display: block; }
@@ -294,13 +297,18 @@ html[data-theme="dark"] #themeBtn .ico-moon { display: block; }
 }
 html.toc-inline .shell { grid-template-columns: var(--side-w) minmax(0, 1fr) var(--toc-w); }
 
-/* 宽屏下左上角按钮 = 折叠 / 展开左侧栏 */
+/* 宽屏下左上角按钮 = 折叠 / 展开左侧栏；右上角按钮 = 折叠 / 展开右侧目录 */
 @media (min-width: 1024px) {
   html.nav-collapsed .shell { grid-template-columns: 0 minmax(0, 1fr); }
   html.nav-collapsed.toc-inline .shell { grid-template-columns: 0 minmax(0, 1fr) var(--toc-w); }
   html.nav-collapsed .sidebar { transform: translateX(-102%); }
   html.nav-collapsed .resizer-side { display: none; }
   html.nav-collapsed #menuBtn { background: var(--accent-soft); color: var(--accent-text); }
+
+  html.toc-collapsed.toc-inline .shell { grid-template-columns: var(--side-w) minmax(0, 1fr) 0; }
+  html.nav-collapsed.toc-collapsed.toc-inline .shell { grid-template-columns: 0 minmax(0, 1fr) 0; }
+  html.toc-collapsed.toc-inline .toc { display: none; }
+  html.toc-collapsed.toc-inline #tocBtn { background: var(--accent-soft); color: var(--accent-text); }
 }
 
 /* ---------- 面板宽度拖拽手柄 ---------- */

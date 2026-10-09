@@ -1090,12 +1090,30 @@
     document.body.classList.contains('toc-open') ? closeToc() : openToc();
   }
 
-  // 目录按钮只在"有目录 + 三列放不下"时出现
+  // 目录按钮：只要有本页目录就显示
+  //   常驻（toc-inline）—— 折叠 / 展开右侧目录，与左上角按钮折叠左侧栏对称
+  //   抽屉（非 toc-inline）—— 打开 / 关闭右侧目录抽屉
   function updateTocBtn() {
-    var inline = document.documentElement.classList.contains('toc-inline');
-    var show = !el.tocAside.hidden && tocItems.length > 0 && !inline;
-    el.tocBtn.hidden = !show;
-    if (!show) closeToc();
+    var hasToc = !el.tocAside.hidden && tocItems.length > 0;
+    el.tocBtn.hidden = !hasToc;
+    if (!hasToc) closeToc();
+    syncTocBtn();
+  }
+
+  function syncTocBtn() {
+    var root = document.documentElement;
+    var inline = root.classList.contains('toc-inline');
+    var collapsed = root.classList.contains('toc-collapsed');
+    var label = !inline ? '本页目录' : (collapsed ? '展开右侧目录' : '收起右侧目录');
+    el.tocBtn.title = label;
+    el.tocBtn.setAttribute('aria-label', label);
+    el.tocBtn.setAttribute('aria-expanded', inline && !collapsed ? 'true' : 'false');
+  }
+
+  function setTocCollapsed(on) {
+    var root = document.documentElement;
+    root.classList.toggle('toc-collapsed', on);
+    try { localStorage.setItem('dlf-toc-collapsed', on ? '1' : '0'); } catch (e) { /* ignore */ }
   }
 
   // 宽屏：折叠 / 展开左侧栏；窄屏：抽屉开关
@@ -1118,7 +1136,20 @@
     }
   });
   syncMenuBtn();
-  el.tocBtn.addEventListener('click', toggleToc);
+  syncTocBtn();
+  el.tocBtn.addEventListener('click', function () {
+    var root = document.documentElement;
+    if (root.classList.contains('toc-inline')) {
+      var collapsed = !root.classList.contains('toc-collapsed');
+      setTocCollapsed(collapsed);
+      if (window.__fitLayout) window.__fitLayout();
+      // 展开后若空间已放不下常驻目录，直接以抽屉形式呈现
+      if (!collapsed && !root.classList.contains('toc-inline')) openToc();
+      syncTocBtn();
+    } else {
+      toggleToc();
+    }
+  });
   el.tocClose.addEventListener('click', closeToc);
   el.mask.addEventListener('click', function () { closeNav(); closeToc(); });
 

@@ -58,7 +58,7 @@ DROPOUT = 0.1                    # 论文 5.4：P_drop = 0.1
 
 BATCH_SIZE = 64
 TRAIN_STEPS = 2000
-WARMUP_STEPS = 400               # 论文 5.3：warmup_steps = 4000
+WARMUP_STEPS = 400               # 论文 5.3：warmup_steps = 4000，这里取400
 TASK = "reverse"                 # "reverse"（反转）| "copy"（复制）
 SEED = 42
 RESULTS_DIR = "./results_transformer"

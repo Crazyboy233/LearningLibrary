@@ -194,7 +194,7 @@
 
   /* ------------------------------------------------------------ 内容页面 */
   function render(pid, anchor) {
-    if (!pid) { renderHome(); window.scrollTo(0, 0); return; }
+    if (!pid) { renderHome(); scrollToY(0); return; }
 
     var p = PAGES[pid];
     var s = DATA.meta.stats;
@@ -300,7 +300,7 @@
       pendingQuery = null;
       jumpToMatch(anchor, q);
     } else {
-      // 首次进入页面时瞬时定位，避免长页面平滑滚动造成错位
+      // 打开带锚点的链接：直接落位（不平滑），后续布局变化由 pinTarget 兜住
       scrollToAnchor(anchor, false, true);
     }
   }
@@ -450,22 +450,93 @@
   }
 
   /* ------------------------------------------------------------- 滚动 */
+  // 页面样式里不再声明 scroll-behavior，平滑与否由调用点决定：
+  // 跳转（搜索落点 / 打开带锚点的链接）一律瞬时落位，其余滚动才做平滑。
+  var REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  function maxScroll() {
+    return Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  }
+
+  function scrollToY(y, instant) {
+    window.scrollTo({
+      top: Math.max(0, Math.min(y, maxScroll())),
+      behavior: (instant || REDUCED) ? 'auto' : 'smooth'
+    });
+  }
+
+  // 目标元素在文档里的坐标（留出顶栏高度）
+  function anchorY(target) {
+    return target.getBoundingClientRect().top + window.scrollY - 76;
+  }
+
   function scrollToEl(target, flash, instant) {
     if (!target) return;
-    var y = target.getBoundingClientRect().top + window.scrollY - 76;
-    window.scrollTo({ top: Math.max(0, y), behavior: instant ? 'auto' : 'smooth' });
+    scrollToY(anchorY(target), instant);
     if (flash) {
       target.classList.remove('flash');
       void target.offsetWidth;
       target.classList.add('flash');
       setTimeout(function () { target.classList.remove('flash'); }, 1600);
     }
+    pinTarget(target);
   }
 
   function scrollToAnchor(anchor, flash, instant) {
-    if (!anchor) { window.scrollTo({ top: 0, behavior: instant ? 'auto' : 'smooth' }); return; }
+    if (!anchor) { scrollToY(0, instant); return; }
     var t = document.getElementById(anchor);
     if (t) scrollToEl(t, flash, instant);
+  }
+
+  /**
+   * 落点校正。
+   *
+   * 跳转发生的时候页面往往还没长全：配图是异步加载的、流程图是异步渲染的，
+   * 它们的最终高度都不为 0，会把目标往下顶几百到几千像素——而此时落点已经
+   * 按旧布局算完了，于是「跳不到指定位置」。
+   *
+   * 所以跳转后盯住目标一段时间：只有当滚动已经停下、目标却不在正确位置时，
+   * 才把它重新对齐一次。这样既不会打断平滑滚动，也不会和用户抢滚动条
+   * （用户一动滚轮 / 触摸 / 翻页键就立刻收手）。
+   */
+  var pinned = null;
+
+  var SCROLL_KEYS = {
+    ArrowUp: 1, ArrowDown: 1, PageUp: 1, PageDown: 1, Home: 1, End: 1, ' ': 1, Spacebar: 1
+  };
+
+  function pinTarget(target) {
+    pinned = null;
+    if (!target || !target.isConnected) return;
+    var st = { el: target, lastY: -1, idle: 0, move: 0, frames: 0 };
+    pinned = st;
+
+    function onKey(e) { if (SCROLL_KEYS[e.key]) release(); }
+    function release() {
+      window.removeEventListener('wheel', release);
+      window.removeEventListener('touchstart', release);
+      window.removeEventListener('keydown', onKey);
+      if (pinned === st) pinned = null;
+    }
+    window.addEventListener('wheel', release, { passive: true });
+    window.addEventListener('touchstart', release, { passive: true });
+    window.addEventListener('keydown', onKey);
+
+    requestAnimationFrame(function step() {
+      if (pinned !== st || !st.el.isConnected || st.frames++ > 600) { release(); return; }
+      var y = window.scrollY, want = anchorY(st.el);
+      if (Math.abs(y - st.lastY) > 0.5) {
+        st.lastY = y; st.idle = 0;                       // 还在动（平滑动画 / 用户在滚）
+        if (++st.move > 90) { release(); return; }       // 连动 1.5s 以上：是用户
+      } else if (Math.abs(y - want) > 1 && Math.abs(want - maxScroll()) > 1) {
+        st.move = 0; st.idle = 0;                        // 停下了但位置不对：纠一次
+        window.scrollTo({ top: Math.max(0, Math.min(want, maxScroll())), behavior: 'auto' });
+        st.lastY = window.scrollY;
+      } else if (++st.idle > 8) {                        // 连续 ~8 帧稳定：收工
+        release(); return;
+      }
+      requestAnimationFrame(step);
+    });
   }
 
   /* ------------------------------------------- 搜索命中定位 + 正文高亮 */
@@ -541,7 +612,7 @@
   function jumpToMatch(anchor, query) {
     var terms = query.toLowerCase().split(/\s+/).filter(Boolean);
     var scope = el.content.querySelector('.doc-body') || el.content;
-    if (!terms.length) { scrollToAnchor(anchor, true); return; }
+    if (!terms.length) { scrollToAnchor(anchor, true, true); return; }
 
     highlightTerms(scope, terms);
 
@@ -552,8 +623,8 @@
       if (!startEl || isAtOrAfter(marks[i], startEl)) { target = marks[i]; break; }
     }
     if (!target) target = marks[0] || startEl;
-    if (target) scrollToEl(target, true);
-    else scrollToAnchor(anchor, true);
+    if (target) scrollToEl(target, true, true);
+    else scrollToAnchor(anchor, true, true);
   }
 
   /* ------------------------------------------------------------- 搜索 */
@@ -728,7 +799,7 @@
     if (!items.length) return;
     sel = (i + items.length) % items.length;
     for (var k = 0; k < items.length; k++) items[k].classList.toggle('sel', k === sel);
-    items[sel].scrollIntoView({ block: 'nearest' });
+    items[sel].scrollIntoView({ block: 'nearest', behavior: REDUCED ? 'auto' : 'smooth' });
   }
 
   function commit(index) {

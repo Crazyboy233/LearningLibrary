@@ -72,10 +72,10 @@ def random_batch(batch_size, task=TASK):
     """在线生成一个 batch：长度随机，便于检验模型的泛化能力。
 
     返回：
-        src     (B, SEQ_LEN)  源序列，[符号...] + EOS，其余位补 PAD
-        tgt_in  (B, SEQ_LEN)  解码器输入，SOS + [目标符号...]
-        tgt_out (B, SEQ_LEN)  监督标签，  [目标符号...] + EOS
-        lens    (B,)          每个样本的真实长度（不含 EOS）
+        src     (B, SEQ_LEN)  源序列，[符号...] + EOS，其余位补 PAD  编码器：model.encode(src, ...)
+        tgt_in  (B, SEQ_LEN)  解码器输入，SOS + [目标符号...]。      解码器：model.decode(tgt_in, ...)
+        tgt_out (B, SEQ_LEN)  监督标签，  [目标符号...] + EOS       算损失：masked_loss(logits, tgt_out)
+        lens    (B,)          每个样本的真实长度（不含 EOS）          没人用
     """
     lens = rng.integers(1, MAX_SYMBOLS + 1, size=batch_size)
     src = np.full((batch_size, SEQ_LEN), PAD, np.int32)
@@ -84,11 +84,16 @@ def random_batch(batch_size, task=TASK):
 
     for i, L in enumerate(lens):
         s = rng.integers(0, N_SYMBOLS, size=L) + 3          # 符号 id 从 3 开始
-        t = s[::-1] if task == "reverse" else s
+        t = s[::-1] if task == "reverse" else s             # 答案 = 源的反序
         src[i, :L + 1] = np.append(s, EOS)                  # [s... ] EOS
         tgt_in[i, :L + 1] = np.append(SOS, t)               # SOS [t... ]
         tgt_out[i, :L + 1] = np.append(t, EOS)              # [t... ] EOS
-
+    # print(f'================debug===============')
+    # print(f'src = {src}')
+    # print(f'tgt_in = {tgt_in}')
+    # print(f'tgt_out = {tgt_out}')
+    # print(f'lens = {lens}')
+    # print(f'================debug===============')
     return src, tgt_in, tgt_out, lens
 
 
@@ -128,7 +133,7 @@ NEG_INF = -1e9
 
 def padding_mask(seq):
     """padding 掩码：形状 (B, 1, 1, T)，PAD 位置为 -1e9，其余为 0（加性掩码）。"""
-    keep = tf.cast(tf.not_equal(seq, PAD), tf.float32)
+    keep = tf.cast(tf.not_equal(seq, PAD), tf.float32)          # 不是 PAD 的位置 = 1，是 PAD = 0
     return (1.0 - keep[:, tf.newaxis, tf.newaxis, :]) * NEG_INF
 
 
@@ -137,8 +142,8 @@ def causal_mask(size):
 
     位置 i 只能看到 <= i 的位置，从而保证解码器的自回归性质。
     """
-    tri = tf.linalg.band_part(tf.ones((size, size)), -1, 0)
-    return (1.0 - tri)[tf.newaxis, tf.newaxis, :, :] * NEG_INF
+    tri = tf.linalg.band_part(tf.ones((size, size)), -1, 0)     # 保留下三角（含对角线），上三角清 0
+    return (1.0 - tri)[tf.newaxis, tf.newaxis, :, :] * NEG_INF  # 1 0反转，扩维，*-1e9
 
 
 # ============================ 4. 缩放点积注意力 + 多头 ============================
@@ -156,7 +161,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         self.d_k = d_model // n_heads          # 论文 3.2.2：d_k = d_v = d_model / h
         self.d_v = d_model // n_heads
 
-        self.wq = tf.keras.layers.Dense(d_model)
+        # wq / wk / wv / wo = 论文 3.2.2 四个投影矩阵
+        self.wq = tf.keras.layers.Dense(d_model)    # w 是 weight，q/k/v/o 分别是 Query / Key / Value / Output。
         self.wk = tf.keras.layers.Dense(d_model)
         self.wv = tf.keras.layers.Dense(d_model)
         self.wo = tf.keras.layers.Dense(d_model)   # W^O
@@ -170,7 +176,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
     def call(self, q, k, v, attn_mask=None, training=False):
         # 注意：参数名不能叫 `mask`——那是 Keras Layer 内置的掩码机制保留字，
-        # 同名会被框架接管并产生 "does not support masking" 警告。
+
+        # Q，K，V 默认 shape 都是 [B, T, d_model]
         B = tf.shape(q)[0]
 
         q = self._split_heads(self.wq(q))       # (B, h, Tq, d_k)
@@ -196,7 +203,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
 # ============================ 5. 位置编码 ============================
 class PositionalEncoding(tf.keras.layers.Layer):
-    """论文 3.5：PE[pos, 2i] = sin(pos / 10000^(2i/d)), PE[pos, 2i+1] = cos(...)
+    """论文 3.5：
+    PE[pos, 2i] = sin(pos / 10000^(2i/d)), 
+    PE[pos, 2i+1] = cos(pos / 10000^(2i/d))
 
     用固定公式而不是可学习参数，好处是可以外推到训练时没见过的更长的序列（表 3 (E)）。
     """
@@ -286,7 +295,7 @@ class Transformer(tf.keras.Model):
         self.dec_layers = [DecoderLayer(d_model, d_ff, n_heads, dropout) for _ in range(n_layers)]
 
     def encode(self, src, src_mask, training=False):
-        x = self.encoder_embedding(src) * tf.math.sqrt(tf.cast(self.d_model, tf.float32))  # 3.4：乘 sqrt(d_model)
+        x = self.encoder_embedding(src) * tf.math.sqrt(tf.cast(self.d_model, tf.float32))  # 论文3.4：乘 sqrt(d_model)
         x = self.emb_dropout(self.pos_encoding(x), training=training)
         attns = []
         for layer in self.enc_layers:
@@ -295,7 +304,7 @@ class Transformer(tf.keras.Model):
         return x, attns
 
     def decode(self, tgt_in, enc_out, src_mask, tgt_mask, training=False):
-        x = self.decoder_embedding(tgt_in) * tf.math.sqrt(tf.cast(self.d_model, tf.float32))
+        x = self.decoder_embedding(tgt_in) * tf.math.sqrt(tf.cast(self.d_model, tf.float32))    # 论文3.4：乘 sqrt(d_model)
         x = self.emb_dropout(self.pos_encoding(x), training=training)
         self_attns, cross_attns = [], []
         for layer in self.dec_layers:
@@ -326,7 +335,7 @@ class Transformer(tf.keras.Model):
 
 # ============================ 8. 损失与学习率 ============================
 def masked_loss(logits, labels):
-    """标签平滑（5.4）+ 只在真实 token 上求平均（忽略 PAD 位置）。
+    """标签平滑（论文 5.4）+ 只在真实 token 上求平均（忽略 PAD 位置）。
 
     label_smoothing=0.1 会让模型学到“不那么自信”的分布，
     困惑度（PPL）变差但翻译准确率/BLEU 反而提升。
@@ -490,8 +499,12 @@ def main():
 
     model = Transformer()
     # 先跑一次前向，把参数建出来才能统计参数量
-    dummy_src, dummy_tgt, _, _ = random_batch(2)
-    _ = model(dummy_src, dummy_tgt)
+    dummy_src, dummy_tgt_in, _, _ = random_batch(2)
+    # print(f'================debug===============')
+    # print(f'dummy_src = {dummy_src}')
+    # print(f'dummy_tgt_in = {dummy_tgt_in}')
+    # print(f'================debug===============')
+    _ = model(dummy_src, dummy_tgt_in)
     print(f"可训练参数: {sum(int(np.prod(v.shape)) for v in model.trainable_variables):,}\n")
 
     lr_schedule = TransformerLRSchedule(D_MODEL, WARMUP_STEPS)

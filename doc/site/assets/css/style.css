@@ -108,9 +108,9 @@ html[data-theme="dark"] {
 [hidden] { display: none !important; }
 
 html { -webkit-text-size-adjust: 100%; }
-@media (prefers-reduced-motion: no-preference) {
-  html { scroll-behavior: smooth; }
-}
+/* 这里刻意不声明 scroll-behavior:smooth —— 它会把 JS 里 behavior:'auto'
+   的滚动也变成平滑滚动，跳转落点就会被动画期间的布局变化带偏。
+   平滑与否统一由 app.js 的 scrollToY() 决定，并自行处理 reduced-motion。 */
 
 body {
   margin: 0;

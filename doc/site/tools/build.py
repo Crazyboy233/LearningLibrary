@@ -22,6 +22,7 @@ import html as htmllib
 import json
 import re
 import shutil
+import struct
 import subprocess
 import sys
 from datetime import datetime
@@ -439,11 +440,96 @@ def build_search_index(md_text: str, page_id: str, toc: list) -> list[dict]:
 
 
 # --------------------------------------------------------------------------
-# 资源
+# 资源: 复制配图, 并记录原始像素尺寸
+#
+# 图片是异步加载的: 没有 width/height 时浏览器先按 0 高排版, 图片回来后才把下方
+# 内容顶下去。搜索跳转是在图片回来之前算好落点的, 于是会落到错误位置。
+# 把原始尺寸写进 <img>, 浏览器就能提前预留占位高度(样式里有 max-width:100% +
+# height:auto, 仍是响应式缩放, 尺寸只当宽高比提示用)。
 # --------------------------------------------------------------------------
+def _jpeg_size(data: bytes):
+    i, n = 2, len(data)
+    while i + 9 < n:
+        if data[i] != 0xFF:
+            i += 1
+            continue
+        marker = data[i + 1]
+        if marker == 0xFF:
+            i += 1
+            continue
+        if marker in (0x01, 0xD8) or 0xD0 <= marker <= 0xD7:
+            i += 2
+            continue
+        seg = int.from_bytes(data[i + 2:i + 4], "big")
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            return (int.from_bytes(data[i + 7:i + 9], "big"),
+                    int.from_bytes(data[i + 5:i + 7], "big"))
+        i += 2 + seg
+    return None
+
+
+def _webp_size(head: bytes):
+    fmt = head[12:16]
+    if len(head) < 30:
+        return None
+    if fmt == b"VP8X":
+        return (int.from_bytes(head[24:27], "little") + 1,
+                int.from_bytes(head[27:30], "little") + 1)
+    if fmt == b"VP8 " and head[23:26] == b"\x9d\x01\x2a":
+        return (int.from_bytes(head[26:28], "little") & 0x3FFF,
+                int.from_bytes(head[28:30], "little") & 0x3FFF)
+    if fmt == b"VP8L" and head[20] == 0x2F:
+        bits = int.from_bytes(head[21:25], "little")
+        return ((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1)
+    return None
+
+
+def image_size(path: Path):
+    """读取图片原始像素尺寸; 不认识的格式返回 None(调用方跳过)"""
+    try:
+        with path.open("rb") as f:
+            head = f.read(64)
+            if head[:8] == b"\x89PNG\r\n\x1a\n":
+                return struct.unpack(">II", head[16:24])
+            if head[:6] in (b"GIF87a", b"GIF89a"):
+                return struct.unpack("<HH", head[6:10])
+            if head[:2] == b"BM":
+                w, h = struct.unpack("<ii", head[18:26])
+                return abs(w), abs(h)
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+                return _webp_size(head)
+            if head[:2] == b"\xff\xd8":
+                f.seek(0)
+                return _jpeg_size(f.read())
+    except (OSError, struct.error):
+        return None
+    return None
+
+
+IMG_TAG_RE = re.compile(r"<img\b[^>]*>")
+
+
+def attach_image_sizes(html_text: str, sizes: dict) -> str:
+    """给渲染后的 <img> 补上 width/height(已有尺寸或认不出的就跳过)"""
+
+    def rep(m):
+        tag = m.group(0)
+        if re.search(r"\s(?:width|height)=", tag):
+            return tag
+        src = re.search(r'\ssrc="([^"]+)"', tag)
+        wh = sizes.get(Path(unquote(src.group(1))).name) if src else None
+        if not wh:
+            return tag
+        close = " />" if tag.endswith("/>") else ">"
+        return f'{tag[:-len(close)].rstrip()} width="{wh[0]}" height="{wh[1]}"{close}'
+
+    return IMG_TAG_RE.sub(rep, html_text)
+
+
 def collect_images() -> dict:
     IMG_DIR.mkdir(parents=True, exist_ok=True)
     mapping: dict[str, str] = {}
+    sizes: dict[str, tuple[int, int]] = {}
     exts = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
     for src_dir in [ROOT_DIR / "assets", ROOT_DIR / "名词解释.assets"]:
         if not src_dir.is_dir():
@@ -452,7 +538,11 @@ def collect_images() -> dict:
             if f.is_file() and f.suffix.lower() in exts:
                 shutil.copy2(f, IMG_DIR / f.name)
                 mapping[f.name] = f"assets/img/{f.name}"
-    return mapping
+                wh = image_size(f)
+                if wh:
+                    sizes[f.name] = wh
+    return mapping, sizes
+
 
 
 def rewrite_assets(text: str, img_map: dict) -> str:
@@ -492,7 +582,7 @@ def slice_source(text: str, start: str | None, end: str | None) -> str:
 # 主流程
 # --------------------------------------------------------------------------
 def main() -> None:
-    img_map = collect_images()
+    img_map, img_sizes = collect_images()
     sources = {}
     for p in PAGES:
         if p["src"] not in sources:
@@ -509,6 +599,7 @@ def main() -> None:
         slugger = Slugger()
         toc: list[dict] = []
         html_out = render_markdown(raw, p["id"], slugger, toc, math_queue)
+        html_out = attach_image_sizes(html_out, img_sizes)
         entries = build_search_index(raw, p["id"], toc)
         for e in entries:
             index_out.append(dict(p=p["id"], a=e["a"], h=e["h"], x=e["x"]))
@@ -573,7 +664,8 @@ def main() -> None:
     for pid, page in pages_out.items():
         if PH_L in page["html"] or PH_R in page["html"]:
             leftovers.append(pid)
-    print(f"✓ 页面 {len(PAGES)} 个 | 索引 {len(index_out)} 条 | 公式 {len(math_queue)} 个 | 图片 {len(img_map)} 张")
+    print(f"✓ 页面 {len(PAGES)} 个 | 索引 {len(index_out)} 条 | 公式 {len(math_queue)} 个 | "
+          f"图片 {len(img_map)} 张(标注尺寸 {len(img_sizes)})")
     print(f"✓ 输出 {OUT_JS.relative_to(SITE_DIR)} ({OUT_JS.stat().st_size / 1024:.0f} KB)")
     if leftovers:
         print("! 占位符未完全替换:", ", ".join(leftovers))

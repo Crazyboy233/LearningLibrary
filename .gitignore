@@ -7,3 +7,7 @@ chihiro_env/
 .workbuddy/
 build/
 a.out
+
+# 数据集：torchvision / TensorFlow 首次运行会自动下载
+pytorch/data/
+tf/data/

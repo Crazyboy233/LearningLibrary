@@ -1,0 +1,57 @@
+name: Deploy notes site
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "doc/**.md"
+      - "doc/site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装构建依赖
+        run: pip install markdown pygments
+
+      # 以仓库里的 Markdown 为准重建，避免忘记本地重建导致部署旧内容
+      - name: 重建站点（Markdown → assets/js/content.js）
+        working-directory: doc/site
+        run: python tools/build.py
+
+      - name: 关闭 Jekyll 处理
+        working-directory: doc/site
+        run: touch .nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

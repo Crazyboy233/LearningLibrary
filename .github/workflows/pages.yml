@@ -41,6 +41,9 @@ jobs:
         run: touch .nojekyll
 
       - uses: actions/configure-pages@v5
+        with:
+          # 仓库还没在 Settings 里开 Pages 时，尝试自动启用（需要 pages: write 权限）
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

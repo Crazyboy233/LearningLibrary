@@ -90,6 +90,16 @@ PAGES = [
          desc="《Attention Is All You Need》全文精译，含注意力公式、复杂度对比与消融实验",
          badge="论文精读", src="Transformer.md",
          start="# Attention Is All You Need", end=None),
+
+    dict(id="libs-cpp", group="第三方库", title="C++ 与分布式库",
+         desc="folly、glog、NCCL、DeepSpeed：从高性能基础库到多卡通信与训练加速",
+         badge="C++", src="各种三方库.md", start="## C++", end="## python"),
+    dict(id="libs-python", group="第三方库", title="Python 库",
+         desc="decorator：更省事的装饰器写法，自动保留函数名与文档字符串",
+         badge="Python", src="各种三方库.md", start="## python", end="## 其他"),
+    dict(id="libs-misc", group="第三方库", title="其他 · DLPack",
+         desc="跨框架张量内存共享的开放标准：数据指针、shape、dtype 与所有权协议",
+         badge="标准", src="各种三方库.md", start="## 其他", end=None),
 ]
 
 GROUP_DESC = {
@@ -97,6 +107,7 @@ GROUP_DESC = {
     "核心术语": "查得快、看得懂的深度学习术语表",
     "训练全流程": "一个模型从数据到参数更新的完整路径",
     "Transformer": "从入门直觉到论文原文",
+    "第三方库": "顺手的库与标准：基础设施、通信、训练加速与跨框架互通",
 }
 
 HEADING_TAGS = {"h1", "h2", "h3", "h4", "h5", "h6"}
@@ -194,7 +205,7 @@ def render_code_block(lang: str, code: str) -> str:
             lexer = guess_lexer(code)
         except ClassNotFound:
             lexer = get_lexer_by_name("text")
-    body = pyg_highlight(code, lexer, HtmlFormatter(nowrap=True))
+    body = pyg_highlight(code, lexer, HtmlFormatter(nowrap=True, classprefix="hl-"))
     label = {
         "python": "Python", "py": "Python", "bash": "Bash", "sh": "Shell",
         "shell": "Shell", "json": "JSON", "text": "Text", "lua": "Lua",
@@ -641,7 +652,7 @@ def main() -> None:
     payload = dict(
         meta=dict(
             title="深度学习框架学习手册",
-            subtitle="框架 · 术语 · 训练流程 · Transformer 论文，一处检索",
+            subtitle="框架 · 术语 · 训练流程 · Transformer 论文 · 常用库，一处检索",
             built=datetime.now().strftime("%Y-%m-%d"),
             stats=dict(
                 pages=len(PAGES), groups=len(order),

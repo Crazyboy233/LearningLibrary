@@ -491,13 +491,13 @@ body.resizing .mermaid-wrap svg { pointer-events: none; }
   background: none; color: var(--text); padding: 0; border-radius: 0; white-space: pre;
 }
 
-/* Pygments token 配色 */
-.hl-c, .hl-c1, .hl-cm, .hl-cs, .hl-cp, .hl-ch { color: var(--hl-comment); font-style: italic; }
+/* Pygments token 配色（构建期 HtmlFormatter 用 classprefix="hl-" 输出） */
+.hl-c, .hl-c1, .hl-c2, .hl-cm, .hl-cs, .hl-cp, .hl-cpf, .hl-ch { color: var(--hl-comment); font-style: italic; }
 .hl-k, .hl-kc, .hl-kd, .hl-kn, .hl-kr, .hl-kt { color: var(--hl-keyword); font-weight: 600; }
-.hl-s, .hl-s1, .hl-s2, .hl-sb, .hl-sc, .hl-sd, .hl-se, .hl-sh, .hl-si, .hl-sr, .hl-ss, .hl-sx { color: var(--hl-string); }
+.hl-s, .hl-s1, .hl-s2, .hl-sb, .hl-sc, .hl-sd, .hl-se, .hl-sh, .hl-si, .hl-sr, .hl-ss, .hl-sx, .hl-sa { color: var(--hl-string); }
 .hl-m, .hl-mb, .hl-mf, .hl-mh, .hl-mi, .hl-mo { color: var(--hl-number); }
-.hl-nf, .hl-fm { color: var(--hl-func); }
-.hl-nb, .hl-bp { color: var(--hl-builtin); }
+.hl-nf, .hl-fm, .hl-nd { color: var(--hl-func); }
+.hl-nb, .hl-bp, .hl-vm { color: var(--hl-builtin); }
 .hl-na, .hl-nt, .hl-nv, .hl-nl { color: var(--hl-attr); }
 .hl-nn, .hl-ne, .hl-nc { color: var(--hl-func); font-weight: 600; }
 .hl-o, .hl-ow, .hl-or { color: var(--hl-op); }

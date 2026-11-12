@@ -1,6 +1,6 @@
 # 深度学习框架学习手册 · 静态站点
 
-把 `DeepLearningFramework/` 目录下的 Markdown 笔记汇总成的一个静态网页，
+把 `doc/` 目录下的 Markdown 笔记汇总成的一个静态网页，
 支持全文搜索、深浅色主题、公式排版与流程图渲染，**完全离线可用**。
 
 ## 打开方式
@@ -89,11 +89,12 @@ site/
 python3 tools/build.py             # 系统 Python 已具备依赖时
 ```
 
-脚本会重新读取三个源文档并覆盖 `assets/js/content.js`：
+脚本会重新读取四个源文档并覆盖 `assets/js/content.js`：
 
 - `../名词解释.md` → 框架（Ray / TensorFlow / PyTorch）、名词解释、并行训练策略、训练流程、激活函数、损失函数、Transformer 入门、MLP
 - `../Transformer.md` → Attention Is All You Need（论文精译）
 - `../训练流程图.md` → PS 架构与 Worker 计算流程
+- `../各种三方库.md` → C++ 与分布式库（folly / glog / NCCL / DeepSpeed）、Python 库（decorator）、其他（DLPack）
 
 依赖：`markdown`、`pygments`（Python）与 `node`（用于 KaTeX 渲染）。
 

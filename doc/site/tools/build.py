@@ -92,7 +92,7 @@ PAGES = [
          start="# Attention Is All You Need", end=None),
 
     dict(id="libs-cpp", group="第三方库", title="C++ 与分布式库",
-         desc="folly、glog、NCCL、DeepSpeed：从高性能基础库到多卡通信与训练加速",
+         desc="folly、glog、NCCL、Gloo、DeepSpeed：从高性能基础库到多卡通信与训练加速",
          badge="C++", src="各种三方库.md", start="## C++", end="## python"),
     dict(id="libs-python", group="第三方库", title="Python 库",
          desc="decorator：更省事的装饰器写法，自动保留函数名与文档字符串",

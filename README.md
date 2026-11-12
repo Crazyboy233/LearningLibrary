@@ -1,62 +1,28 @@
 # 个人学习使用
 
-### 主要目录结构如下：
-```python
-├── c++
-│   ├── Cmke.md
-│   └── 七七八八的介绍.md
-├── DeepLearningFramework
-│   ├── chihiro
-│   │   ├── CmakeLists.txt
-│   │   ├── core
-│   │   │   ├── embeddings.cc
-│   │   │   ├── embeddings.h
-│   │   │   ├── grad_fn.cc
-│   │   │   ├── grad_fn.h
-│   │   │   ├── linear.cc
-│   │   │   ├── linear.h
-│   │   │   ├── module.h
-│   │   │   ├── ops.cc
-│   │   │   ├── ops.h
-│   │   │   ├── optimizer.cc
-│   │   │   ├── optimizer.h
-│   │   │   ├── parameter.h
-│   │   │   ├── Tensor.cc
-│   │   │   └── Tensor.h
-│   │   ├── doc
-│   │   ├── interface
-│   │   │   └── pybind.cc
-│   │   ├── README.md
-│   │   └── test
-│   ├── pytorch
-│   │   ├── 01_train.py
-│   │   ├── 02_train.py
-│   │   ├── 04_CTR_demo.py
-│   │   ├── 05_wide_deep.py
-│   │   ├── data
-│   │   ├── README.md
-│   ├── tf
-│   │   ├── README.md
-│   │   └── work
-│   │       ├── 01_train.py
-│   │       └── sample.py
-│   ├── Transformer.md
-│   ├── 名词解释.md
-│   └── 训练流程图.md
-├── env
-│   ├── Miniconda.md
-│   └── WSL2.md
-├── linux
-│   └── command.md
-├── lua
-│   ├── 01_元表的元方法介绍.lua
-│   ├── lua base.md
-│   ├── lua boost.md
-│   ├── 马尔可夫链
-│   └── 数据描述
-├── python
-│   ├── 01_内置函数介绍.py
-│   └── 02_容器及方法介绍.py
-├── 各种三方库.md
-└── 剑指offer
+### 目录说明
+
+| 目录 / 文件 | 内容 |
+| --- | --- |
+| `c++/` | C++ 笔记（CMake 用法、杂项） |
+| `DeepLearningFramework/chihiro/` | 手写深度学习框架（C++ + pybind，CMake 构建） |
+| `pytorch/` | PyTorch 练习，以及 Transformer 从零实现（`work/02_transformer.py`） |
+| `tf/` | TensorFlow 练习，以及同一个 Transformer 的 TF 版实现 |
+| `doc/` | Transformer / 名词解释 / 训练流程图等笔记，`doc/site/` 是汇总的静态站点 |
+| `env/` | 环境配置记录（Miniconda、WSL2） |
+| `linux/` | Linux 常用命令 |
+| `lua/` | Lua 基础、进阶笔记与数据描述 |
+| `python/` | Python 内置函数、容器及方法示例 |
+| `剑指offer/` | 刷题代码（C++） |
+| `各种三方库.md` | 第三方库速查 |
+
+### 跑示例
+
+虚拟环境就近放在各自目录下（`pytorch/torch-env`、`tf/tf-env`，已被 gitignore）：
+
+```bash
+cd pytorch && source torch-env/bin/activate && python work/02_transformer.py
+cd tf      && source tf-env/bin/activate    && python work/02_transformer.py
 ```
+
+训练产物写到当前目录的 `results_transformer/`。

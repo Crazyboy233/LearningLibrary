@@ -1,7 +1,7 @@
 # 环境安装
 ## Ubuntu
 ```bash
-cd DeepLearningFramework/pytorch
+cd pytorch
 python3 -m venv torch-env
 source torch-env/bin/activate
 # CPU 版（通用）
@@ -13,7 +13,7 @@ python3 -m pip install torch torchvision torchaudio --index-url https://download
 
 ## MacOS
 ```bash
-cd DeepLearningFramework/pytorch
+cd pytorch
 python3 -m venv torch-env
 # 激活虚拟环境
 source torch-env/bin/activate

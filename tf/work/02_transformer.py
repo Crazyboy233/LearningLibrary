@@ -21,9 +21,9 @@ Transformer（Attention Is All You Need）从零实现 + 训练示例
    11. 自回归贪心解码             —— 3.1 + 6.1（论文用 beam search=4，这里用贪心便于阅读）
 
 运行（先激活虚拟环境）：
-    cd DeepLearningFramework/tf
+    cd tf
     source tf-env/bin/activate
-    python work/02_train.py
+    python work/02_transformer.py
 """
 import os
 import time

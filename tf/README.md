@@ -1,7 +1,7 @@
 # 环境安装
 ## Ubuntu
 ```bash
-cd DeepLearningFramework/tf
+cd tf
 python3 -m venv tf-env
 source tf-env/bin/activate
 # CPU 版（推荐新手）
@@ -15,7 +15,7 @@ python3 -m pip install tensorflow[and-cuda]  # 自动适配 CUDA/cuDNN
 
 ## MacOS
 ```bash
-cd DeepLearningFramework/tf
+cd tf
 python3 -m venv tf-env
 source tf-env/bin/activate
 # 通用安装命令（自动适配 Intel/M 芯片）
@@ -37,7 +37,7 @@ print(f"TensorFlow 是否可用: {tf.test.is_built_with_cuda() if tf.test.is_bui
 **虚拟环境**
 ```bash
 # 使用之前需要激活虚拟环境
-source torch-env/bin/activate
+source tf-env/bin/activate
 # 退出虚拟环境
 deactivate
 ```

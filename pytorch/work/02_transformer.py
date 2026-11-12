@@ -1,7 +1,7 @@
 """
 Transformer（Attention Is All You Need）从零实现 + 训练示例 —— PyTorch 版
 
-和 `DeepLearningFramework/tf/work/02_train.py` 是同一个例子的两次实现：
+和 `tf/work/02_transformer.py` 是同一个例子的两次实现：
 常量、数据生成、网络结构、打印格式、注意力可视化全部保持一致，
 所以两个文件可以直接左右对照，看同一件事在两个框架里怎么写。
 
@@ -43,9 +43,9 @@ Transformer（Attention Is All You Need）从零实现 + 训练示例 —— PyT
 └────────────────────────┴──────────────────────────────────┴──────────────────────────────────┘
 
 运行（先激活虚拟环境）：
-    cd DeepLearningFramework/pytorch
+    cd pytorch
     source torch-env/bin/activate
-    python work/02_train.py
+    python work/02_transformer.py
 """
 import os
 import math

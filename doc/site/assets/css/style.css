@@ -45,6 +45,14 @@ html[data-theme="light"] {
   --hl-attr:     #d1463a;
   --hl-op:       #5d6672;
   --scroll-thumb:#d3d8e0;
+  /* 内容组件: Shape 对比 / 编译流程 */
+  --cmp-card:     #ffffff;
+  --cmp-s-bg:     #eef6f0;
+  --cmp-s-fg:     #15803d;
+  --cmp-s-line:   #dbeade;
+  --cmp-d-bg:     #eaf1fc;
+  --cmp-d-fg:     #2563eb;
+  --cmp-d-line:   #d8e4f8;
 }
 
 html[data-theme="dark"] {
@@ -87,6 +95,14 @@ html[data-theme="dark"] {
   --hl-attr:     #e06c75;
   --hl-op:       #abb2bf;
   --scroll-thumb:#333a45;
+  /* 内容组件: Shape 对比 / 编译流程 */
+  --cmp-card:     #171a21;
+  --cmp-s-bg:     rgba(74, 222, 128, .10);
+  --cmp-s-fg:     #86efac;
+  --cmp-s-line:   rgba(74, 222, 128, .22);
+  --cmp-d-bg:     rgba(96, 165, 250, .12);
+  --cmp-d-fg:     #93c5fd;
+  --cmp-d-line:   rgba(96, 165, 250, .26);
 }
 
 :root {
@@ -528,6 +544,68 @@ body.resizing .mermaid-wrap svg { pointer-events: none; }
 .math-error {
   color: var(--hl-attr); font-family: var(--mono); font-size: .85em;
   border-bottom: 1px dashed var(--hl-attr);
+}
+
+/* ---------- 内容组件: 两种 Shape 对比 ---------- */
+.shape-compare {
+  margin: 22px 0; padding: 17px 18px 18px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--cmp-card); box-shadow: var(--shadow-sm);
+}
+.sc-head { font-size: 14.5px; font-weight: 650; color: var(--text); margin-bottom: 13px; }
+.sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sc-col { border-radius: 10px; padding: 14px 16px 12px; }
+.sc-static  { background: var(--cmp-s-bg); }
+.sc-dynamic { background: var(--cmp-d-bg); }
+.sc-label { font-size: 14.5px; font-weight: 650; color: var(--text); }
+.sc-value {
+  font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -.02em;
+  margin: 7px 0 3px;
+}
+.sc-static .sc-value  { color: var(--cmp-s-fg); }
+.sc-dynamic .sc-value { color: var(--cmp-d-fg); }
+.sc-note {
+  font-size: 12.5px; color: var(--text-mute);
+  padding-bottom: 11px; margin-bottom: 8px;
+}
+.sc-static .sc-note  { border-bottom: 1px solid var(--cmp-s-line); }
+.sc-dynamic .sc-note { border-bottom: 1px solid var(--cmp-d-line); }
+.doc-body .sc-list {
+  list-style: none; margin: 0; padding: 0;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.95;
+  color: var(--text-soft);
+}
+.doc-body .sc-list li { margin: 0; }
+
+/* ---------- 内容组件: 编译流程（箭头居中） ---------- */
+.shape-flow {
+  margin: 22px 0; padding: 17px 18px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--cmp-card); box-shadow: var(--shadow-sm);
+}
+.sf-group + .sf-group {
+  margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border-soft);
+}
+.sf-title { font-size: 14px; font-weight: 650; color: var(--text); margin-bottom: 12px; }
+.sf-steps { list-style: none; margin: 0; padding: 0; }
+.sf-steps li {
+  position: relative; text-align: center;
+  padding: 11px 16px; border-radius: 8px;
+  font-size: 14px; color: var(--text);
+}
+.sf-static .sf-steps li  { background: var(--cmp-s-bg); }
+.sf-dynamic .sf-steps li { background: var(--cmp-d-bg); }
+.sf-steps li + li { margin-top: 24px; }
+.sf-steps li + li::before {
+  content: "↓"; position: absolute; left: 0; right: 0; top: -21px;
+  text-align: center; font-size: 14px; line-height: 1; font-weight: 500;
+  color: var(--text-mute);
+}
+
+@media (max-width: 720px) {
+  .sc-grid { grid-template-columns: 1fr; }
+  .shape-compare, .shape-flow { padding: 14px; }
+  .sf-steps li { font-size: 13.5px; padding: 10px 12px; }
 }
 
 /* Mermaid */

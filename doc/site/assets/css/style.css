@@ -740,6 +740,19 @@ html:not(.toc-inline) .toc-close { display: grid; }
 }
 .hero p { margin: 0 0 24px; max-width: 620px; color: var(--text-soft); font-size: 16px; }
 
+.hero-by {
+  display: flex; align-items: center; gap: 8px;
+  margin: -8px 0 24px; font-size: 13.5px; color: var(--text-mute);
+}
+.hero-by .av {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff; font-size: 13px; font-weight: 700;
+}
+.hero-by .by-name { color: var(--text); font-weight: 650; letter-spacing: .01em; }
+.hero-by .by-sep { opacity: .45; }
+
 .hero-search {
   display: flex; align-items: center; gap: 10px;
   max-width: 520px; padding: 11px 16px; margin-bottom: 26px;
@@ -907,6 +920,91 @@ html:not(.toc-inline) .toc-close { display: grid; }
   .lb-hint { display: none; }
   .lb-stage .lightbox-svg { padding: 10px; }
   .search-foot { display: none; }
+}
+
+/* ---------- BM25 一节: 流程图与折线图 ---------- */
+.bm25-flow {
+  margin: 22px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-elev);
+}
+.bm25-flow .node {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-elev);
+  text-align: center;
+}
+.bm25-flow .node.tone-d { background: var(--cmp-d-bg); border-color: var(--cmp-d-line); }
+.bm25-flow .node.tone-s { background: var(--cmp-s-bg); border-color: var(--cmp-s-line); }
+.bm25-flow .node.tone-a { background: var(--accent-soft); border-color: var(--accent-line); }
+.bm25-flow .t { font-size: 15px; font-weight: 700; color: var(--text); }
+.bm25-flow .v { margin-top: 3px; font-size: 13.5px; color: var(--text-soft); }
+.bm25-flow .v.strong { color: var(--cmp-d-fg); font-weight: 600; }
+.bm25-flow .arrow { margin: 9px 0; text-align: center; font-size: 15px; line-height: 1; color: var(--text-mute); }
+.bm25-flow .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.bm25-flow .pill {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--cmp-d-bg);
+  color: var(--cmp-d-fg);
+  font-size: 12px;
+}
+
+.bm25-fig {
+  margin: 22px 0;
+  padding: 18px 20px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-elev);
+}
+.bm25-fig .fig-head { font-size: 15px; font-weight: 700; color: var(--text); }
+.bm25-fig .fig-sub { margin-top: 4px; font-size: 12.5px; color: var(--text-soft); }
+.bm25-fig .fig-note { margin-top: 2px; font-size: 12.5px; color: var(--text-soft); }
+.bm25-chart { margin-top: 4px; }
+.bm25-chart svg { display: block; width: 100%; height: auto; }
+.bm25-chart .band { pointer-events: all; cursor: crosshair; }
+.bm25-chart .hit .vline,
+.bm25-chart .hit .tip { opacity: 0; transition: opacity .12s ease; }
+.bm25-chart .hit:hover .vline { opacity: .45; }
+.bm25-chart .hit:hover .tip { opacity: 1; }
+.bm25-chart .tip { pointer-events: none; }
+.bm25-tip {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 8px 12px 9px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-elev);
+  box-shadow: var(--shadow-md);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bm25-tip .t-x { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.bm25-tip .t-row { display: flex; align-items: center; gap: 6px; color: var(--text-soft); }
+.bm25-tip .t-row i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.bm25-tip .t-row b { margin-left: auto; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bm25-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  height: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+.bm25-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.bm25-legend i { width: 9px; height: 9px; border-radius: 50%; }
+
+@media (max-width: 560px) {
+  .bm25-flow .cols { grid-template-columns: 1fr; }
 }
 
 /* ---------- 刘海屏安全区 ---------- */

@@ -923,29 +923,29 @@ html:not(.toc-inline) .toc-close { display: grid; }
 }
 
 /* ---------- BM25 一节: 流程图与折线图 ---------- */
-.bm25-flow {
+.doc-flow {
   margin: 22px 0;
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--bg-elev);
 }
-.bm25-flow .node {
+.doc-flow .node {
   padding: 12px 16px;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: var(--bg-elev);
   text-align: center;
 }
-.bm25-flow .node.tone-d { background: var(--cmp-d-bg); border-color: var(--cmp-d-line); }
-.bm25-flow .node.tone-s { background: var(--cmp-s-bg); border-color: var(--cmp-s-line); }
-.bm25-flow .node.tone-a { background: var(--accent-soft); border-color: var(--accent-line); }
-.bm25-flow .t { font-size: 15px; font-weight: 700; color: var(--text); }
-.bm25-flow .v { margin-top: 3px; font-size: 13.5px; color: var(--text-soft); }
-.bm25-flow .v.strong { color: var(--cmp-d-fg); font-weight: 600; }
-.bm25-flow .arrow { margin: 9px 0; text-align: center; font-size: 15px; line-height: 1; color: var(--text-mute); }
-.bm25-flow .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.bm25-flow .pill {
+.doc-flow .node.tone-d { background: var(--cmp-d-bg); border-color: var(--cmp-d-line); }
+.doc-flow .node.tone-s { background: var(--cmp-s-bg); border-color: var(--cmp-s-line); }
+.doc-flow .node.tone-a { background: var(--accent-soft); border-color: var(--accent-line); }
+.doc-flow .t { font-size: 15px; font-weight: 700; color: var(--text); }
+.doc-flow .v { margin-top: 3px; font-size: 13.5px; color: var(--text-soft); }
+.doc-flow .v.strong { color: var(--cmp-d-fg); font-weight: 600; }
+.doc-flow .arrow { margin: 9px 0; text-align: center; font-size: 15px; line-height: 1; color: var(--text-mute); }
+.doc-flow .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.doc-flow .pill {
   display: inline-block;
   margin-top: 6px;
   padding: 1px 10px;
@@ -1004,8 +1004,67 @@ html:not(.toc-inline) .toc-close { display: grid; }
 .bm25-legend i { width: 9px; height: 9px; border-radius: 50%; }
 
 @media (max-width: 560px) {
-  .bm25-flow .cols { grid-template-columns: 1fr; }
+  .doc-flow .cols { grid-template-columns: 1fr; }
 }
+
+/* ---------- 倒排索引: 结构示意图 ---------- */
+.idx-struct {
+  margin: 22px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-elev);
+}
+.idx-struct .fig-head { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+.idx-struct .panel {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-soft);
+}
+.idx-struct .panel-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.idx-struct .panel-sub { margin-top: 4px; font-size: 12.5px; color: var(--text-soft); }
+.idx-struct .rows { margin-top: 12px; display: grid; gap: 10px; }
+.idx-struct .row {
+  display: grid;
+  grid-template-columns: minmax(96px, 168px) 22px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.idx-struct .term {
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: var(--cmp-d-bg);
+  border: 1px solid var(--cmp-d-line);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.idx-struct .link { text-align: center; color: var(--text-mute); }
+.idx-struct .target { font-size: 13.5px; color: var(--text-soft); }
+.idx-struct .arrow {
+  margin: 10px 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--text-mute);
+}
+.idx-struct .thead,
+.idx-struct .tr { display: grid; grid-template-columns: 1.1fr 1fr 1.4fr; gap: 10px; }
+.idx-struct .thead {
+  margin-top: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+.idx-struct .tr {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 13.5px;
+  color: var(--text);
+}
+.idx-struct .note { margin-top: 10px; font-size: 12.5px; color: var(--text-soft); }
 
 /* ---------- 刘海屏安全区 ---------- */
 @supports (padding: max(0px)) {

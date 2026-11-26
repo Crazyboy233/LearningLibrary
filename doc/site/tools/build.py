@@ -52,40 +52,41 @@ NODE_BIN = shutil.which("node") or "/opt/homebrew/bin/node"
 PAGES = [
     dict(id="ray", group="深度学习框架", title="Ray",
          desc="Python 原生统一分布式计算框架，一套 API 覆盖数据处理、训练、调优、推理与强化学习",
-         badge="分布式", src="名词解释.md", start="## Ray", end="## TensorFlow"),
+         badge="分布式", src="框架.md", start="## Ray", end="## TensorFlow"),
     dict(id="tensorflow", group="深度学习框架", title="TensorFlow",
          desc="从张量、计算图到 Serving / Lite / JS 的全链路框架组成",
-         badge="框架", src="名词解释.md", start="## TensorFlow", end="## Pytorch"),
+         badge="框架", src="框架.md", start="## TensorFlow", end="## Pytorch"),
     dict(id="pytorch", group="深度学习框架", title="PyTorch",
          desc="动态图优先的深度学习框架，本节记录其学习入口与资料索引",
-         badge="框架", src="名词解释.md", start="## Pytorch", end="# 名词解释"),
+         badge="框架", src="框架.md", start="## Pytorch", end=None),
 
     dict(id="glossary", group="核心术语", title="名词解释",
          desc="深度学习与分布式训练高频术语速查：从 Attention、AUC 到 ZeRO、残差",
-         badge="术语速查", src="名词解释.md", start="# 名词解释", end="# 并行训练策略"),
+         badge="术语速查", src="名词解释.md", start="# 名词解释", end=None),
     dict(id="parallel", group="核心术语", title="并行训练策略",
          desc="DDP 数据并行、PP 流水线并行、TP 张量并行的分工与差异",
-         badge="分布式", src="名词解释.md", start="# 并行训练策略", end="# 训练流程"),
+         badge="分布式", src="并行训练策略.md", start="# 并行训练策略", end=None),
     dict(id="activations", group="核心术语", title="激活函数",
          desc="Sigmoid / Tanh / ReLU / Leaky ReLU / Softmax 的定义与取舍",
-         badge="基础", src="名词解释.md", start="# 激活函数", end="# 损失函数"),
+         badge="基础", src="激活函数.md", start="# 激活函数", end=None),
     dict(id="losses", group="核心术语", title="损失函数",
          desc="均方误差、交叉熵、BCEWithLogitsLoss 的适用场景",
-         badge="基础", src="名词解释.md", start="# 损失函数", end="# Transformer"),
+         badge="基础", src="损失函数.md", start="# 损失函数", end=None),
     dict(id="mlp", group="核心术语", title="最基础的神经网络 MLP",
          desc="多层感知机：一切深度网络的起点",
-         badge="基础", src="名词解释.md", start="# 最基础的神经网络MLP", end=None),
+         badge="基础", src="最基础的神经网络MLP.md", start="# 最基础的神经网络MLP", end=None),
 
     dict(id="training-loop", group="训练全流程", title="训练流程",
          desc="从离线特征工程、在线特征处理到 forward / backward / update 的完整链路",
-         badge="流程", src="名词解释.md", start="# 训练流程", end="# 激活函数"),
+         badge="流程", src="训练流程.md", start="# 训练流程", end="## PS 架构更新参数流程"),
     dict(id="training-flow", group="训练全流程", title="训练流程图 · PS 架构",
          desc="参数服务器与 Worker 的 Pull / Push 协同，以及单节点前向反向计算的每一步",
-         badge="流程图", src="训练流程图.md", start=None, end=None),
+         badge="流程图", src="训练流程.md", start="## PS 架构更新参数流程", end=None,
+         include_start=True),
 
     dict(id="transformer-intro", group="Transformer", title="Transformer 入门",
          desc="核心思想、编码器解码器两大组成部分与关键模块速览",
-         badge="架构", src="名词解释.md", start="# Transformer", end="# 最基础的神经网络MLP"),
+         badge="架构", src="Transformer入门.md", start="# Transformer", end=None),
     dict(id="paper-transformer", group="Transformer", title="Attention Is All You Need",
          desc="《Attention Is All You Need》全文精译，含注意力公式、复杂度对比与消融实验",
          badge="论文精读", src="Transformer.md",
@@ -542,7 +543,7 @@ def collect_images() -> dict:
     mapping: dict[str, str] = {}
     sizes: dict[str, tuple[int, int]] = {}
     exts = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
-    for src_dir in [ROOT_DIR / "assets", ROOT_DIR / "名词解释.assets"]:
+    for src_dir in [ROOT_DIR / "assets"]:
         if not src_dir.is_dir():
             continue
         for f in sorted(src_dir.iterdir()):
@@ -569,7 +570,8 @@ def rewrite_assets(text: str, img_map: dict) -> str:
     return text
 
 
-def slice_source(text: str, start: str | None, end: str | None) -> str:
+def slice_source(text: str, start: str | None, end: str | None,
+                 include_start: bool = False) -> str:
     if start is None:
         return text
     lines = text.split("\n")
@@ -586,7 +588,7 @@ def slice_source(text: str, start: str | None, end: str | None) -> str:
             if lines[j].strip() == end:
                 ei = j
                 break
-    return "\n".join(lines[si + 1: ei])
+    return "\n".join(lines[si if include_start else si + 1: ei])
 
 
 # --------------------------------------------------------------------------
@@ -605,7 +607,8 @@ def main() -> None:
     warnings: list[str] = []
 
     for p in PAGES:
-        raw = slice_source(sources[p["src"]], p["start"], p["end"])
+        raw = slice_source(sources[p["src"]], p["start"], p["end"],
+                           p.get("include_start", False))
         raw = rewrite_assets(raw, img_map)
         slugger = Slugger()
         toc: list[dict] = []
